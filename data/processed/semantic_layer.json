@@ -1,0 +1,92 @@
+{
+  "table_aliases": {
+    "Artist": ["艺人", "歌手", "艺术家"],
+    "Album": ["专辑", "唱片"],
+    "Track": ["歌曲", "曲目", "音乐"],
+    "Customer": ["客户", "顾客", "用户"],
+    "Employee": ["员工", "客服", "支持代表", "销售代表", "客服代表"],
+    "Invoice": ["订单", "发票", "消费记录", "销售", "消费", "账单"],
+    "InvoiceLine": ["订单明细", "明细", "销售明细", "购买明细"],
+    "Playlist": ["播放列表", "歌单"],
+    "PlaylistTrack": ["歌单歌曲", "播放列表歌曲"],
+    "Genre": ["流派", "风格"],
+    "MediaType": ["媒体类型", "音频格式", "格式"]
+  },
+  "column_aliases": {
+    "Artist.Name": ["艺人名", "歌手名"],
+    "Album.Title": ["专辑名", "专辑标题"],
+    "Track.Name": ["歌名", "歌曲名", "曲目名"],
+    "Track.UnitPrice": ["单价", "歌曲价格", "价格"],
+    "Track.Milliseconds": ["时长", "播放时长", "长度"],
+    "Customer.FirstName": ["名字"],
+    "Customer.LastName": ["姓氏"],
+    "Customer.Company": ["公司", "企业"],
+    "Customer.Country": ["国家"],
+    "Customer.City": ["城市"],
+    "Customer.SupportRepId": ["客服代表", "支持员工", "销售代表"],
+    "Employee.FirstName": ["员工名字"],
+    "Employee.LastName": ["员工姓氏"],
+    "Employee.Title": ["职位", "岗位"],
+    "Employee.HireDate": ["入职时间", "入职日期"],
+    "Invoice.InvoiceId": ["订单号", "发票号"],
+    "Invoice.InvoiceDate": ["下单时间", "日期", "订单日期"],
+    "Invoice.Total": ["总额", "销售额", "消费金额", "订单金额", "消费", "收入", "花费"],
+    "Invoice.BillingCountry": ["账单国家", "销售国家"],
+    "Invoice.BillingCity": ["账单城市", "销售城市"],
+    "InvoiceLine.Quantity": ["数量", "销量"],
+    "InvoiceLine.UnitPrice": ["明细单价"],
+    "Genre.Name": ["流派名"],
+    "MediaType.Name": ["媒体名", "格式名"],
+    "Playlist.Name": ["歌单名", "播放列表名"]
+  },
+  "metric_templates": [
+    {
+      "name": "销售额",
+      "table": "Invoice",
+      "column": "Total",
+      "aggregation": "SUM"
+    },
+    {
+      "name": "订单数量",
+      "table": "Invoice",
+      "column": "InvoiceId",
+      "aggregation": "COUNT"
+    },
+    {
+      "name": "客户数量",
+      "table": "Customer",
+      "column": "CustomerId",
+      "aggregation": "COUNT"
+    },
+    {
+      "name": "歌曲数量",
+      "table": "Track",
+      "column": "TrackId",
+      "aggregation": "COUNT"
+    },
+    {
+      "name": "专辑数量",
+      "table": "Album",
+      "column": "AlbumId",
+      "aggregation": "COUNT"
+    },
+    {
+      "name": "平均消费",
+      "table": "Invoice",
+      "column": "Total",
+      "aggregation": "AVG"
+    },
+    {
+      "name": "平均时长",
+      "table": "Track",
+      "column": "Milliseconds",
+      "aggregation": "AVG"
+    },
+    {
+      "name": "单价",
+      "table": "Track",
+      "column": "UnitPrice",
+      "aggregation": "MAX"
+    }
+  ]
+}

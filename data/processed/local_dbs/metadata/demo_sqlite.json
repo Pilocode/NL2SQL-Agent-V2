@@ -1,0 +1,60 @@
+{
+  "database_name": "demo",
+  "dialect": "sqlite",
+  "description": "SQLite 数据库 demo，主要包含 customers 等业务数据。",
+  "source": {
+    "name": "local-upload",
+    "database_file": "C:\\Users\\LEGION\\AppData\\Local\\Temp\\tmpraklu36b\\demo.sqlite"
+  },
+  "domain_tags": [
+    "demo"
+  ],
+  "tables": [
+    {
+      "name": "customers",
+      "row_count": 2,
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "用于标识或关联 customers 记录。"
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "表示 customers 的名称或标题信息。"
+        }
+      ],
+      "description": "记录 customers 相关数据，核心字段包括 id、name。"
+    },
+    {
+      "name": "orders",
+      "row_count": 0,
+      "primary_keys": [
+        "order_id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "order_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "用于标识或关联 orders 记录。"
+        },
+        {
+          "name": "customer_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "用于标识或关联 orders 记录。"
+        }
+      ],
+      "description": "记录 orders 相关数据，核心字段包括 order_id、customer_id。"
+    }
+  ]
+}

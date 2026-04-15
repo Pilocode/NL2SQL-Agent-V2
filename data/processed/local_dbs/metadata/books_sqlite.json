@@ -1,0 +1,49 @@
+{
+  "database_name": "books",
+  "dialect": "sqlite",
+  "description": "用于管理书籍信息的数据库，包含书名、作者及销售记录",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/books.sqlite"
+  },
+  "domain_tags": [
+    "books"
+  ],
+  "tables": [
+    {
+      "name": "books",
+      "row_count": 3,
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "唯一标识每条书籍记录的主键"
+        },
+        {
+          "name": "title",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "书籍的名称或标题，用于区分不同书籍"
+        },
+        {
+          "name": "author",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "记录书籍的作者姓名，属于关键业务属性"
+        },
+        {
+          "name": "sold",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "记录书籍的销售数量，反映市场表现"
+        }
+      ],
+      "description": "存储书籍的基本信息和销售状态，核心字段为书名、作者及销量"
+    }
+  ]
+}

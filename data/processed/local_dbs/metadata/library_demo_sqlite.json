@@ -1,0 +1,158 @@
+{
+  "database_name": "library_demo",
+  "dialect": "sqlite",
+  "description": "图书馆管理系统演示库，涵盖图书、借阅及学生信息",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/library_demo.sqlite"
+  },
+  "domain_tags": [
+    "library_demo"
+  ],
+  "tables": [
+    {
+      "name": "Book",
+      "row_count": 6,
+      "primary_keys": [
+        "Book_no"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Book_no",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "description": "图书的唯一标识编号"
+        },
+        {
+          "name": "Book_name",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "description": "图书的名称或标题"
+        },
+        {
+          "name": "Author",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "description": "图书的作者姓名"
+        },
+        {
+          "name": "Price",
+          "type": "FLOAT",
+          "nullable": true,
+          "description": "图书的销售金额数值"
+        }
+      ],
+      "description": "存储图书基本信息，含编号、名称、作者及价格"
+    },
+    {
+      "name": "Borrow",
+      "row_count": 7,
+      "primary_keys": [
+        "Student_no",
+        "Book_no"
+      ],
+      "foreign_keys": [
+        {
+          "column": "Book_no",
+          "references": {
+            "table": "Book",
+            "column": "Book_no"
+          }
+        },
+        {
+          "column": "Student_no",
+          "references": {
+            "table": "Student",
+            "column": "Student_no"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "Student_no",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "description": "学生的唯一识别编号"
+        },
+        {
+          "name": "Book_no",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "description": "对应图书的唯一编号"
+        },
+        {
+          "name": "Return_date",
+          "type": "DATETIME",
+          "nullable": true,
+          "description": "记录图书归还的具体日期时间"
+        }
+      ],
+      "description": "记录学生借阅图书的详情，含学号、书号和归还日期"
+    },
+    {
+      "name": "DemoCourse",
+      "row_count": 0,
+      "primary_keys": [
+        "course_id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "course_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "课程的唯一标识符"
+        },
+        {
+          "name": "course_name",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "课程的名称信息"
+        },
+        {
+          "name": "credit",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "课程对应的学分数值"
+        }
+      ],
+      "description": "存储课程基础信息，含课程ID、名称及学分"
+    },
+    {
+      "name": "Student",
+      "row_count": 5,
+      "primary_keys": [
+        "Student_no"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Student_no",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "description": "学生的唯一识别编号"
+        },
+        {
+          "name": "Student_name",
+          "type": "VARCHAR(30)",
+          "nullable": true,
+          "description": "学生的真实姓名"
+        },
+        {
+          "name": "Grade",
+          "type": "VARCHAR(10)",
+          "nullable": true,
+          "description": "学生所在的年级信息"
+        },
+        {
+          "name": "Age",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "记录 Student 中 Age 的业务属性。"
+        }
+      ],
+      "description": "存储学生基本信息，含学号、姓名及年级"
+    }
+  ]
+}

@@ -1,0 +1,526 @@
+{
+  "database_name": "Chinook",
+  "dialect": "sqlite",
+  "source": {
+    "name": "chinook-database",
+    "repository": "https://github.com/lerocha/chinook-database",
+    "database_file": "data/raw/chinook/Chinook_Sqlite.sqlite"
+  },
+  "tables": [
+    {
+      "name": "Album",
+      "row_count": 347,
+      "primary_keys": [
+        "AlbumId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "ArtistId",
+          "references": {
+            "table": "Artist",
+            "column": "ArtistId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "AlbumId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Title",
+          "type": "NVARCHAR(160)",
+          "nullable": false
+        },
+        {
+          "name": "ArtistId",
+          "type": "INTEGER",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "Artist",
+      "row_count": 275,
+      "primary_keys": [
+        "ArtistId"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "ArtistId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "Customer",
+      "row_count": 59,
+      "primary_keys": [
+        "CustomerId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "SupportRepId",
+          "references": {
+            "table": "Employee",
+            "column": "EmployeeId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "CustomerId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "FirstName",
+          "type": "NVARCHAR(40)",
+          "nullable": false
+        },
+        {
+          "name": "LastName",
+          "type": "NVARCHAR(20)",
+          "nullable": false
+        },
+        {
+          "name": "Company",
+          "type": "NVARCHAR(80)",
+          "nullable": true
+        },
+        {
+          "name": "Address",
+          "type": "NVARCHAR(70)",
+          "nullable": true
+        },
+        {
+          "name": "City",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "State",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "Country",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "PostalCode",
+          "type": "NVARCHAR(10)",
+          "nullable": true
+        },
+        {
+          "name": "Phone",
+          "type": "NVARCHAR(24)",
+          "nullable": true
+        },
+        {
+          "name": "Fax",
+          "type": "NVARCHAR(24)",
+          "nullable": true
+        },
+        {
+          "name": "Email",
+          "type": "NVARCHAR(60)",
+          "nullable": false
+        },
+        {
+          "name": "SupportRepId",
+          "type": "INTEGER",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "Employee",
+      "row_count": 8,
+      "primary_keys": [
+        "EmployeeId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "ReportsTo",
+          "references": {
+            "table": "Employee",
+            "column": "EmployeeId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "EmployeeId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "LastName",
+          "type": "NVARCHAR(20)",
+          "nullable": false
+        },
+        {
+          "name": "FirstName",
+          "type": "NVARCHAR(20)",
+          "nullable": false
+        },
+        {
+          "name": "Title",
+          "type": "NVARCHAR(30)",
+          "nullable": true
+        },
+        {
+          "name": "ReportsTo",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "BirthDate",
+          "type": "DATETIME",
+          "nullable": true
+        },
+        {
+          "name": "HireDate",
+          "type": "DATETIME",
+          "nullable": true
+        },
+        {
+          "name": "Address",
+          "type": "NVARCHAR(70)",
+          "nullable": true
+        },
+        {
+          "name": "City",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "State",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "Country",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "PostalCode",
+          "type": "NVARCHAR(10)",
+          "nullable": true
+        },
+        {
+          "name": "Phone",
+          "type": "NVARCHAR(24)",
+          "nullable": true
+        },
+        {
+          "name": "Fax",
+          "type": "NVARCHAR(24)",
+          "nullable": true
+        },
+        {
+          "name": "Email",
+          "type": "NVARCHAR(60)",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "Genre",
+      "row_count": 25,
+      "primary_keys": [
+        "GenreId"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "GenreId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "Invoice",
+      "row_count": 412,
+      "primary_keys": [
+        "InvoiceId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "CustomerId",
+          "references": {
+            "table": "Customer",
+            "column": "CustomerId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "InvoiceId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "CustomerId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "InvoiceDate",
+          "type": "DATETIME",
+          "nullable": false
+        },
+        {
+          "name": "BillingAddress",
+          "type": "NVARCHAR(70)",
+          "nullable": true
+        },
+        {
+          "name": "BillingCity",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "BillingState",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "BillingCountry",
+          "type": "NVARCHAR(40)",
+          "nullable": true
+        },
+        {
+          "name": "BillingPostalCode",
+          "type": "NVARCHAR(10)",
+          "nullable": true
+        },
+        {
+          "name": "Total",
+          "type": "NUMERIC(10,2)",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "InvoiceLine",
+      "row_count": 2240,
+      "primary_keys": [
+        "InvoiceLineId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "TrackId",
+          "references": {
+            "table": "Track",
+            "column": "TrackId"
+          }
+        },
+        {
+          "column": "InvoiceId",
+          "references": {
+            "table": "Invoice",
+            "column": "InvoiceId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "InvoiceLineId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "InvoiceId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "TrackId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "UnitPrice",
+          "type": "NUMERIC(10,2)",
+          "nullable": false
+        },
+        {
+          "name": "Quantity",
+          "type": "INTEGER",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "MediaType",
+      "row_count": 5,
+      "primary_keys": [
+        "MediaTypeId"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "MediaTypeId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "Playlist",
+      "row_count": 18,
+      "primary_keys": [
+        "PlaylistId"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(120)",
+          "nullable": true
+        }
+      ]
+    },
+    {
+      "name": "PlaylistTrack",
+      "row_count": 8715,
+      "primary_keys": [
+        "PlaylistId",
+        "TrackId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "TrackId",
+          "references": {
+            "table": "Track",
+            "column": "TrackId"
+          }
+        },
+        {
+          "column": "PlaylistId",
+          "references": {
+            "table": "Playlist",
+            "column": "PlaylistId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "PlaylistId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "TrackId",
+          "type": "INTEGER",
+          "nullable": false
+        }
+      ]
+    },
+    {
+      "name": "Track",
+      "row_count": 3503,
+      "primary_keys": [
+        "TrackId"
+      ],
+      "foreign_keys": [
+        {
+          "column": "MediaTypeId",
+          "references": {
+            "table": "MediaType",
+            "column": "MediaTypeId"
+          }
+        },
+        {
+          "column": "GenreId",
+          "references": {
+            "table": "Genre",
+            "column": "GenreId"
+          }
+        },
+        {
+          "column": "AlbumId",
+          "references": {
+            "table": "Album",
+            "column": "AlbumId"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "TrackId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Name",
+          "type": "NVARCHAR(200)",
+          "nullable": false
+        },
+        {
+          "name": "AlbumId",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "MediaTypeId",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "GenreId",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "Composer",
+          "type": "NVARCHAR(220)",
+          "nullable": true
+        },
+        {
+          "name": "Milliseconds",
+          "type": "INTEGER",
+          "nullable": false
+        },
+        {
+          "name": "Bytes",
+          "type": "INTEGER",
+          "nullable": true
+        },
+        {
+          "name": "UnitPrice",
+          "type": "NUMERIC(10,2)",
+          "nullable": false
+        }
+      ]
+    }
+  ]
+}

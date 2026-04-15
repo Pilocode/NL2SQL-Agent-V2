@@ -1,0 +1,45 @@
+{
+  "description": "小型 schema retrieval 评测集，用于比较三级摘要增强前后的 Top-K 命中率。",
+  "cases": [
+    {
+      "database": "sales",
+      "question": "帮我看一下销售流水情况",
+      "expected_tables": ["orders"]
+    },
+    {
+      "database": "sales",
+      "question": "订单金额最高的是哪一年",
+      "expected_tables": ["orders"]
+    },
+    {
+      "database": "sales",
+      "question": "客户来自哪些国家",
+      "expected_tables": ["customers"]
+    },
+    {
+      "database": "sales",
+      "question": "客户身份信息都有哪些",
+      "expected_tables": ["customers"]
+    },
+    {
+      "database": "hr",
+      "question": "员工薪资情况如何",
+      "expected_tables": ["employees"]
+    },
+    {
+      "database": "hr",
+      "question": "工程部门有哪些员工",
+      "expected_tables": ["employees"]
+    },
+    {
+      "database": "books",
+      "question": "图书销量排名",
+      "expected_tables": ["books"]
+    },
+    {
+      "database": "books",
+      "question": "作者和书名列表",
+      "expected_tables": ["books"]
+    }
+  ]
+}

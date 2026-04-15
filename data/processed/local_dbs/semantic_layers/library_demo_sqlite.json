@@ -1,0 +1,104 @@
+{
+  "table_aliases": {},
+  "column_aliases": {},
+  "database_summary": "图书馆管理系统演示库，涵盖图书、借阅及学生信息",
+  "table_descriptions": {
+    "Book": "存储图书基本信息，含编号、名称、作者及价格",
+    "Borrow": "记录学生借阅图书的详情，含学号、书号和归还日期",
+    "DemoCourse": "存储课程基础信息，含课程ID、名称及学分",
+    "Student": "存储学生基本信息，含学号、姓名及年级"
+  },
+  "column_descriptions": {
+    "Book.Book_no": "图书的唯一标识编号",
+    "Book.Book_name": "图书的名称或标题",
+    "Book.Author": "图书的作者姓名",
+    "Book.Price": "图书的销售金额数值",
+    "Borrow.Student_no": "学生的唯一识别编号",
+    "Borrow.Book_no": "对应图书的唯一编号",
+    "Borrow.Return_date": "记录图书归还的具体日期时间",
+    "DemoCourse.course_id": "课程的唯一标识符",
+    "DemoCourse.course_name": "课程的名称信息",
+    "DemoCourse.credit": "课程对应的学分数值",
+    "Student.Student_no": "学生的唯一识别编号",
+    "Student.Student_name": "学生的真实姓名",
+    "Student.Grade": "学生所在的年级信息",
+    "Student.Age": "记录 Student 中 Age 的业务属性。"
+  },
+  "summary_terms": {
+    "database": [
+      "图书馆管理系统演示库",
+      "涵盖图书",
+      "借阅及学生信息"
+    ],
+    "tables": {
+      "Book": [
+        "存储图书基本信息",
+        "含编号",
+        "名称",
+        "作者及价格"
+      ],
+      "Borrow": [
+        "记录学生借阅图书的详情",
+        "含学号",
+        "书号和归还日期"
+      ],
+      "DemoCourse": [
+        "存储课程基础信息",
+        "含课程",
+        "id",
+        "名称及学分"
+      ],
+      "Student": [
+        "存储学生基本信息",
+        "含学号",
+        "姓名及年级"
+      ]
+    },
+    "columns": {
+      "Book.Book_no": [
+        "图书的唯一标识编号"
+      ],
+      "Book.Book_name": [
+        "图书的名称或标题"
+      ],
+      "Book.Author": [
+        "图书的作者姓名"
+      ],
+      "Book.Price": [
+        "图书的销售金额数值"
+      ],
+      "Borrow.Student_no": [
+        "学生的唯一识别编号"
+      ],
+      "Borrow.Book_no": [
+        "对应图书的唯一编号"
+      ],
+      "Borrow.Return_date": [
+        "记录图书归还的具体日期时间"
+      ],
+      "DemoCourse.course_id": [
+        "课程的唯一标识符"
+      ],
+      "DemoCourse.course_name": [
+        "课程的名称信息"
+      ],
+      "DemoCourse.credit": [
+        "课程对应的学分数值"
+      ],
+      "Student.Student_no": [
+        "学生的唯一识别编号"
+      ],
+      "Student.Student_name": [
+        "学生的真实姓名"
+      ],
+      "Student.Grade": [
+        "学生所在的年级信息"
+      ],
+      "Student.Age": [
+        "student",
+        "age",
+        "的业务属性"
+      ]
+    }
+  }
+}

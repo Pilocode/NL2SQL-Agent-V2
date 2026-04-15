@@ -1,0 +1,59 @@
+{
+  "table_aliases": {},
+  "column_aliases": {},
+  "database_summary": "SQLite 数据库 demo，主要包含 customers 等业务数据。",
+  "table_descriptions": {
+    "customers": "记录 customers 相关数据，核心字段包括 id、name。",
+    "orders": "记录 orders 相关数据，核心字段包括 order_id、customer_id。"
+  },
+  "column_descriptions": {
+    "customers.id": "用于标识或关联 customers 记录。",
+    "customers.name": "表示 customers 的名称或标题信息。",
+    "orders.order_id": "用于标识或关联 orders 记录。",
+    "orders.customer_id": "用于标识或关联 orders 记录。"
+  },
+  "summary_terms": {
+    "database": [
+      "sqlite",
+      "demo",
+      "主要包含",
+      "customers",
+      "等业务数据"
+    ],
+    "tables": {
+      "customers": [
+        "customers",
+        "相关数据",
+        "核心字段包括",
+        "id",
+        "name"
+      ],
+      "orders": [
+        "orders",
+        "相关数据",
+        "核心字段包括",
+        "order_id",
+        "customer_id"
+      ]
+    },
+    "columns": {
+      "customers.id": [
+        "用于标识或关联",
+        "customers"
+      ],
+      "customers.name": [
+        "表示",
+        "customers",
+        "的名称或标题信息"
+      ],
+      "orders.order_id": [
+        "用于标识或关联",
+        "orders"
+      ],
+      "orders.customer_id": [
+        "用于标识或关联",
+        "orders"
+      ]
+    }
+  }
+}

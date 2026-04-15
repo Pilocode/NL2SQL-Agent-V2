@@ -1,0 +1,49 @@
+{
+  "database_name": "hr",
+  "dialect": "sqlite",
+  "description": "存储企业人力资源数据，包含员工基本信息及薪资记录。",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/hr.sqlite"
+  },
+  "domain_tags": [
+    "hr"
+  ],
+  "tables": [
+    {
+      "name": "employees",
+      "row_count": 3,
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "唯一标识员工记录的主键字段。"
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "存储员工的姓名或职位名称。"
+        },
+        {
+          "name": "dept",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "记录员工所属部门的业务分类。"
+        },
+        {
+          "name": "salary",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "记录员工的薪资金额数值。"
+        }
+      ],
+      "description": "记录员工基本信息，包括ID、姓名、部门及薪资数据。"
+    }
+  ]
+}

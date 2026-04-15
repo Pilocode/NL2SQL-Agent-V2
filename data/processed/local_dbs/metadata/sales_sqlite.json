@@ -1,0 +1,78 @@
+{
+  "database_name": "sales",
+  "dialect": "sqlite",
+  "description": "记录销售业务相关数据，包含客户与订单信息。",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/sales.sqlite"
+  },
+  "domain_tags": [
+    "sales"
+  ],
+  "tables": [
+    {
+      "name": "customers",
+      "row_count": 4,
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "客户唯一标识符，用于关联其他表记录。"
+        },
+        {
+          "name": "name",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "客户名称或标题，用于识别具体客户实体。"
+        },
+        {
+          "name": "country",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "客户所属国家，反映市场区域分布情况。"
+        }
+      ],
+      "description": "存储客户基本信息，含唯一标识、名称及国家属性。"
+    },
+    {
+      "name": "orders",
+      "row_count": 5,
+      "primary_keys": [
+        "id"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "订单唯一标识符，关联客户与交易记录。"
+        },
+        {
+          "name": "customer_id",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "关联客户ID，指向customers表中的客户记录。"
+        },
+        {
+          "name": "amount",
+          "type": "REAL",
+          "nullable": true,
+          "description": "订单交易金额，记录实际成交数值。"
+        },
+        {
+          "name": "year",
+          "type": "INTEGER",
+          "nullable": true,
+          "description": "订单年份，标识交易发生的时间周期。"
+        }
+      ],
+      "description": "记录订单交易详情，含关联客户、金额及年份信息。"
+    }
+  ]
+}

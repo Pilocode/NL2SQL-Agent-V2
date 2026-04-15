@@ -1,0 +1,69 @@
+{
+  "table_aliases": {},
+  "column_aliases": {},
+  "database_summary": "记录销售业务相关数据，包含客户与订单信息。",
+  "table_descriptions": {
+    "customers": "存储客户基本信息，含唯一标识、名称及国家属性。",
+    "orders": "记录订单交易详情，含关联客户、金额及年份信息。"
+  },
+  "column_descriptions": {
+    "customers.id": "客户唯一标识符，用于关联其他表记录。",
+    "customers.name": "客户名称或标题，用于识别具体客户实体。",
+    "customers.country": "客户所属国家，反映市场区域分布情况。",
+    "orders.id": "订单唯一标识符，关联客户与交易记录。",
+    "orders.customer_id": "关联客户ID，指向customers表中的客户记录。",
+    "orders.amount": "订单交易金额，记录实际成交数值。",
+    "orders.year": "订单年份，标识交易发生的时间周期。"
+  },
+  "summary_terms": {
+    "database": [
+      "记录销售业务相关数据",
+      "包含客户与订单信息"
+    ],
+    "tables": {
+      "customers": [
+        "存储客户基本信息",
+        "含唯一标识",
+        "名称及国家属性"
+      ],
+      "orders": [
+        "记录订单交易详情",
+        "含关联客户",
+        "金额及年份信息"
+      ]
+    },
+    "columns": {
+      "customers.id": [
+        "客户唯一标识符",
+        "用于关联其他表记录"
+      ],
+      "customers.name": [
+        "客户名称或标题",
+        "用于识别具体客户实体"
+      ],
+      "customers.country": [
+        "客户所属国家",
+        "反映市场区域分布情况"
+      ],
+      "orders.id": [
+        "订单唯一标识符",
+        "关联客户与交易记录"
+      ],
+      "orders.customer_id": [
+        "关联客户",
+        "id",
+        "指向",
+        "customers",
+        "表中的客户记录"
+      ],
+      "orders.amount": [
+        "订单交易金额",
+        "记录实际成交数值"
+      ],
+      "orders.year": [
+        "订单年份",
+        "标识交易发生的时间周期"
+      ]
+    }
+  }
+}

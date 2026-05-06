@@ -164,12 +164,20 @@ class SemanticInterpretation:
 
 
 @dataclass(frozen=True)
+class GenerationDiagnostics:
+    strategy: str
+    message: str
+    raw_response_preview: str | None = None
+
+
+@dataclass(frozen=True)
 class NL2SQLResponse:
     pipeline: PipelineResult
     prompt: str
     draft: SQLDraft | None
     validation: ValidationResult
     semantic_interpretation: SemanticInterpretation | None = None
+    generation_diagnostics: GenerationDiagnostics | None = None
     repairs: tuple[RepairStep, ...] = ()
     final_sql: str | None = None
     execution: QueryExecution | None = None

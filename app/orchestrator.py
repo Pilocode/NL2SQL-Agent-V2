@@ -8,15 +8,14 @@ from core.database_registry import load_database_registry
 from core.database_router import DatabaseRouter
 from core.example_retriever import ExampleRetriever
 from core.llm_client import LLMProfile, OpenAICompatibleLLM
-from core.models import AgentTrace, ExampleCandidate, NL2SQLResponse, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, PipelineResult, QueryExecution, RepairStep, SemanticInterpretation, StageUpdate, ValidationResult
-from core.multi_agent import AnswerAgent, QueryAnalysisAgent, SQLGenerationAgent, SQLRepairAgent, SemanticThinkingAgent
+from core.models import AgentTrace, ExampleCandidate, NL2SQLResponse, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, PipelineResult, QueryExecution, SemanticInterpretation, StageUpdate, ValidationResult
+from core.multi_agent import AnswerAgent, QueryAnalysisAgent, SQLGenerationAgent, SemanticThinkingAgent
 from core.prompt_builder import PromptBuilder
 from core.query_analyzer import QueryAnalyzer
 from core.result_explainer import ResultExplainer
 from core.schema_retriever import SchemaRetriever
 from core.sql_executor import SQLiteExecutor
 from core.sql_generator import SQLGenerator
-from core.sql_repairer import SQLRepairer
 from core.sql_validator import SQLValidator
 
 
@@ -63,22 +62,18 @@ class NL2SQLOrchestrator:
         self.query_analyzers: dict[str, QueryAnalyzer] = {}
         self.schema_retrievers: dict[str, SchemaRetriever] = {}
         self.rule_sql_generators: dict[str, SQLGenerator] = {}
-        self.rule_sql_repairers: dict[str, SQLRepairer] = {}
         self.analysis_agents: dict[str, QueryAnalysisAgent] = {}
         self.generation_agents: dict[str, SQLGenerationAgent] = {}
-        self.repair_agents: dict[str, SQLRepairAgent] = {}
         self.executors: dict[str, SQLiteExecutor] = {}
 
         for database_id, context in self.database_registry.items():
             analyzer = QueryAnalyzer(context.semantic_layer)
             retriever = SchemaRetriever(context.schema_catalog, context.semantic_layer)
             sql_generator = SQLGenerator(context.examples, database_id=database_id)
-            sql_repairer = SQLRepairer(sql_generator)
 
             self.query_analyzers[database_id] = analyzer
             self.schema_retrievers[database_id] = retriever
             self.rule_sql_generators[database_id] = sql_generator
-            self.rule_sql_repairers[database_id] = sql_repairer
             self.analysis_agents[database_id] = QueryAnalysisAgent(
                 self.llm_client,
                 self.prompt_builder,
@@ -97,17 +92,6 @@ class NL2SQLOrchestrator:
                 sql_generator,
                 LLMProfile(
                     model=self.settings.llm_generation_model,
-                    temperature=0.0,
-                    max_tokens=520,
-                    enable_thinking=False,
-                ),
-            )
-            self.repair_agents[database_id] = SQLRepairAgent(
-                self.llm_client,
-                self.prompt_builder,
-                sql_repairer,
-                LLMProfile(
-                    model=self.settings.llm_repair_model,
                     temperature=0.0,
                     max_tokens=520,
                     enable_thinking=False,
@@ -283,7 +267,7 @@ class NL2SQLOrchestrator:
             yield "stage", refresh_message
 
         active_database_id = generation_database.database_id if generation_database is not None else self.default_database_id
-        draft, generation_trace, prompt = self.generation_agents[active_database_id].generate(
+        draft, generation_trace, prompt, generation_diagnostics = self.generation_agents[active_database_id].generate(
             question,
             generation_analysis,
             generation_retrievals,
@@ -302,8 +286,31 @@ class NL2SQLOrchestrator:
         stage_updates.append(generation_message)
         yield "stage", generation_message
 
+        if draft is None:
+            failure_message = generation_trace.detail or "SQL 生成失败，未返回可执行 SQL。"
+            validation = ValidationResult(is_valid=False, message=failure_message, operation_mode=operation_mode)
+            response = NL2SQLResponse(
+                pipeline=pipeline,
+                prompt=prompt,
+                draft=None,
+                validation=validation,
+                semantic_interpretation=semantic_interpretation,
+                generation_diagnostics=generation_diagnostics,
+                final_sql=None,
+                execution=QueryExecution(
+                    succeeded=False,
+                    sql="",
+                    error_message=failure_message,
+                ),
+                answer_text=failure_message,
+                agent_traces=tuple(traces),
+                stage_updates=tuple(stage_updates),
+                operation_mode=operation_mode,
+            )
+            yield "final", response
+            return
+
         current_sql = draft.sql if draft is not None else ""
-        repairs: list[RepairStep] = []
         validation = self.sql_validator.validate(current_sql, operation_mode=operation_mode)
         if validation.normalized_sql is not None:
             current_sql = validation.normalized_sql
@@ -315,80 +322,40 @@ class NL2SQLOrchestrator:
         stage_updates.append(validation_message)
         yield "stage", validation_message
 
-        for _ in range(max_repair_rounds):
-            if validation.is_valid:
-                break
+        if not validation.is_valid:
+            response = NL2SQLResponse(
+                pipeline=pipeline,
+                prompt=prompt,
+                draft=draft,
+                validation=validation,
+                semantic_interpretation=semantic_interpretation,
+                generation_diagnostics=generation_diagnostics,
+                final_sql=current_sql or None,
+                execution=QueryExecution(
+                    succeeded=False,
+                    sql=current_sql,
+                    statement_type=validation.statement_type,
+                    error_message=validation.message,
+                ),
+                answer_text=validation.message,
+                agent_traces=tuple(traces),
+                stage_updates=tuple(stage_updates),
+                operation_mode=operation_mode,
+            )
+            yield "final", response
+            return
 
-            repaired, repair_trace = self.repair_agents[active_database_id].repair(
-                question,
-                current_sql,
-                validation.message,
-                generation_analysis,
-                generation_retrievals,
-                generation_examples,
-                semantic_interpretation,
-                generation_database,
-                operation_mode,
-                self.database_registry[active_database_id].schema_catalog,
-            )
-            traces.append(repair_trace)
-            if repaired is None or repaired.sql == current_sql:
-                break
+        execution = self._execute_sql(
+            current_sql,
+            traces,
+            active_database_id,
+            generation_database,
+        )
+        execution_message = self._build_execution_stage_message(execution)
+        stage_updates.append(execution_message)
+        yield "stage", execution_message
 
-            repairs.append(
-                RepairStep(
-                    reason=repaired.message,
-                    sql_before=current_sql,
-                    sql_after=repaired.sql,
-                )
-            )
-            current_sql = repaired.sql
-            validation = self.sql_validator.validate(current_sql, operation_mode=operation_mode)
-            if validation.normalized_sql is not None:
-                current_sql = validation.normalized_sql
-            repair_message = self._build_stage_message(
-                "repair",
-                f"已完成一次 SQL 修复，当前校验结果：{validation.message}",
-            )
-            stage_updates.append(repair_message)
-            yield "stage", repair_message
-
-        execution: QueryExecution | None = None
-        if validation.is_valid and current_sql:
-            execution = self._execute_with_repair(
-                question,
-                pipeline,
-                current_sql,
-                repairs,
-                traces,
-                max_repair_rounds,
-                semantic_interpretation,
-                generation_analysis,
-                generation_retrievals,
-                generation_examples,
-                active_database_id,
-                generation_database,
-                operation_mode,
-            )
-            execution_message = self._build_execution_stage_message(execution)
-            stage_updates.append(execution_message)
-            yield "stage", execution_message
-
-        if execution is None and not validation.is_valid:
-            execution = QueryExecution(
-                succeeded=False,
-                sql=current_sql,
-                statement_type=validation.statement_type,
-                error_message=validation.message,
-            )
-            execution_message = self._build_stage_message(
-                "execution",
-                f"由于 SQL 未通过校验，未执行查询：{validation.message}",
-            )
-            stage_updates.append(execution_message)
-            yield "stage", execution_message
-
-        answer_text = validation.message if not validation.is_valid else "当前未返回结果。"
+        answer_text = "当前未返回结果。"
         if execution is not None:
             answer_text, answer_trace = self.answer_agent.answer(question, current_sql or "", execution, operation_mode)
             traces.append(answer_trace)
@@ -402,7 +369,7 @@ class NL2SQLOrchestrator:
             draft=draft,
             validation=validation,
             semantic_interpretation=semantic_interpretation,
-            repairs=tuple(repairs),
+            generation_diagnostics=generation_diagnostics,
             final_sql=current_sql or None,
             execution=execution,
             answer_text=answer_text,
@@ -412,21 +379,12 @@ class NL2SQLOrchestrator:
         )
         yield "final", response
 
-    def _execute_with_repair(
+    def _execute_sql(
         self,
-        question: str,
-        pipeline: PipelineResult,
         sql: str,
-        repairs: list[RepairStep],
         traces: list[AgentTrace],
-        max_repair_rounds: int,
-        semantic_interpretation: SemanticInterpretation | None,
-        generation_analysis,
-        generation_retrievals,
-        generation_examples,
         database_id: str,
         routed_database,
-        operation_mode: str,
     ) -> QueryExecution:
         executor = self.executors.get(database_id)
         if executor is None:
@@ -437,74 +395,23 @@ class NL2SQLOrchestrator:
                 error_message=f"当前数据库 {database_name} 尚未接入可执行 SQLite 文件，现阶段仅支持 schema 与 example RAG。",
             )
 
-        current_sql = sql
-        current_validation: ValidationResult | None = None
-
-        for _ in range(max_repair_rounds + 1):
-            try:
-                execution = executor.execute(current_sql)
-                traces.append(
-                    AgentTrace(
-                        "execution_agent",
-                        "sqlite",
-                        f"SQL 执行成功，statement_type={execution.statement_type}, row_count={execution.row_count}, affected_rows={execution.affected_rows}",
-                    )
+        try:
+            execution = executor.execute(sql)
+            traces.append(
+                AgentTrace(
+                    "execution_agent",
+                    "sqlite",
+                    f"SQL 执行成功，statement_type={execution.statement_type}, row_count={execution.row_count}, affected_rows={execution.affected_rows}",
                 )
-                return execution
-            except Exception as error:
-                repaired, repair_trace = self.repair_agents[database_id].repair(
-                    question,
-                    current_sql,
-                    str(error),
-                    generation_analysis,
-                    generation_retrievals,
-                    generation_examples,
-                    semantic_interpretation,
-                    routed_database,
-                    operation_mode,
-                    self.database_registry[database_id].schema_catalog,
-                )
-                traces.append(repair_trace)
-                if repaired is None or repaired.sql == current_sql:
-                    traces.append(AgentTrace("execution_agent", "sqlite", f"SQL 执行失败: {error}"))
-                    return QueryExecution(
-                        succeeded=False,
-                        sql=current_sql,
-                        error_message=str(error),
-                    )
-
-                repairs.append(
-                    RepairStep(
-                        reason=repaired.message,
-                        sql_before=current_sql,
-                        sql_after=repaired.sql,
-                    )
-                )
-                current_sql = repaired.sql
-                current_validation = self.sql_validator.validate(current_sql, operation_mode=operation_mode)
-                if not current_validation.is_valid:
-                    return QueryExecution(
-                        succeeded=False,
-                        sql=current_sql,
-                        statement_type=current_validation.statement_type,
-                        error_message=current_validation.message,
-                    )
-                if current_validation.normalized_sql is not None:
-                    current_sql = current_validation.normalized_sql
-
-        if current_validation is not None and not current_validation.is_valid:
+            )
+            return execution
+        except Exception as error:
+            traces.append(AgentTrace("execution_agent", "sqlite", f"SQL 执行失败: {error}"))
             return QueryExecution(
                 succeeded=False,
-                sql=current_sql,
-                statement_type=current_validation.statement_type,
-                error_message=current_validation.message,
+                sql=sql,
+                error_message=str(error),
             )
-
-        return QueryExecution(
-            succeeded=False,
-            sql=current_sql,
-            error_message="SQL 执行失败，且自动修复已达到重试上限。",
-        )
 
     def _build_analysis_trace(self, analysis_trace: AgentTrace, pipeline: PipelineResult, prefix: str | None = None) -> AgentTrace:
         routed_database = pipeline.routed_database

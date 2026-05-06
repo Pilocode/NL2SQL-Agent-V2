@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from core.models import ExampleCandidate, QueryAnalysis, RetrievalHit, SQLDraft, SemanticInterpretation
+from core.models import ColumnProfile, ExampleCandidate, QueryAnalysis, RetrievalHit, SQLDraft, SemanticInterpretation
 
 
 KEYWORD_PATTERN = re.compile(r"[\u4e00-\u9fff]+|[A-Za-z0-9_]+")
@@ -71,15 +71,25 @@ class SQLGenerator:
         retrievals: tuple[RetrievalHit, ...],
         semantic_interpretation: SemanticInterpretation | None = None,
     ) -> tuple[str | None, str, str]:
-        if self.database_id != "chinook":
-            return None, "unsupported", "当前数据库未配置规则模板，等待 LLM 或 example RAG 生成。"
-
         normalized = analysis.normalized_question
         rewritten_question = semantic_interpretation.rewritten_question.lower() if semantic_interpretation is not None else ""
         effective_normalized = rewritten_question or normalized
         table_names = {hit.table_name for hit in retrievals}
         limit = analysis.top_k or self._extract_limit(question)
         year = self._extract_year(question)
+
+        generic_sql, generic_source, generic_rationale = self._generate_generic_rules(
+            question,
+            analysis,
+            retrievals,
+            effective_normalized,
+            limit,
+        )
+        if generic_sql is not None:
+            return generic_sql, generic_source, generic_rationale
+
+        if self.database_id != "chinook":
+            return None, "unsupported", "当前数据库未命中通用 schema 规则，等待 LLM 或 example RAG 生成。"
 
         if (
             {"Customer", "Invoice"}.issubset(table_names)
@@ -338,6 +348,64 @@ class SQLGenerator:
 
         return None, "unsupported", "当前规则未覆盖该问题。"
 
+    def _generate_generic_rules(
+        self,
+        question: str,
+        analysis: QueryAnalysis,
+        retrievals: tuple[RetrievalHit, ...],
+        normalized_question: str,
+        limit: int | None,
+    ) -> tuple[str | None, str, str]:
+        create_sql = self._build_generic_create_table_sql(question, analysis)
+        if create_sql is not None:
+            return create_sql, "generic:create_table", "识别到建表需求，按问题中的英文表名和字段定义生成 CREATE TABLE。"
+
+        add_column_sql = self._build_generic_add_column_sql(question, analysis, retrievals)
+        if add_column_sql is not None:
+            return add_column_sql, "generic:add_column", "识别到加列需求，按问题中的英文表名和字段定义生成 ALTER TABLE ADD COLUMN。"
+
+        if not retrievals:
+            return None, "unsupported", "当前没有召回到可用于通用生成的 schema。"
+
+        primary_hit = retrievals[0]
+        table_name = primary_hit.table_name
+        available_columns = tuple(primary_hit.columns)
+        selected_columns = self._pick_display_columns(available_columns)
+        select_clause = ", ".join(column.name for column in selected_columns) or "*"
+
+        insert_sql = self._build_generic_insert_sql(question, analysis, primary_hit)
+        if insert_sql is not None:
+            return insert_sql, "generic:insert_row", f"识别到新增数据需求，按表 {table_name} 的显式字段赋值生成 INSERT。"
+
+        update_sql = self._build_generic_update_sql(question, analysis, primary_hit)
+        if update_sql is not None:
+            return update_sql, "generic:update_row", f"识别到更新数据需求，按表 {table_name} 的显式字段赋值生成 UPDATE。"
+
+        if any(tag == "count" for tag in analysis.intent_tags) or self._contains_any(normalized_question, ("多少", "几条", "数量", "总数", "记录数")):
+            return (
+                f"SELECT COUNT(*) AS RecordCount FROM {table_name};",
+                "generic:count_rows",
+                f"识别为通用数量统计问题，按召回最高的表 {table_name} 生成 COUNT 查询。",
+            )
+
+        if any(tag == "ranking" for tag in analysis.intent_tags):
+            sortable_column = self._pick_sortable_column(available_columns)
+            if sortable_column is not None:
+                return (
+                    f"SELECT {select_clause} FROM {table_name} ORDER BY {sortable_column.name} DESC LIMIT {limit or 10};",
+                    "generic:top_rows",
+                    f"识别为通用排序问题，按表 {table_name} 中的字段 {sortable_column.name} 生成排行查询。",
+                )
+
+        if self._contains_any(normalized_question, ("哪些", "列出", "查看", "查询", "显示", "所有")) or not analysis.intent_tags:
+            return (
+                f"SELECT {select_clause} FROM {table_name} LIMIT {limit or 20};",
+                "generic:list_rows",
+                f"未命中特定业务规则，按召回最高的表 {table_name} 生成通用列表查询。",
+            )
+
+        return None, "unsupported", "当前问题未命中通用 schema 规则。"
+
     def _select_best_example(
         self,
         question: str,
@@ -377,6 +445,229 @@ class SQLGenerator:
 
     def _extract_keywords(self, text: str) -> tuple[str, ...]:
         return tuple(dict.fromkeys(token.lower() for token in KEYWORD_PATTERN.findall(text)))
+
+    def _pick_display_columns(self, columns: tuple[ColumnProfile, ...]) -> tuple[ColumnProfile, ...]:
+        if not columns:
+            return ()
+        preferred_columns = [
+            column
+            for column in columns
+            if column.is_primary_key or self._contains_any(column.name.lower(), ("name", "title", "id", "no"))
+        ]
+        if preferred_columns:
+            return tuple(preferred_columns[:4])
+        return columns[:4]
+
+    def _pick_sortable_column(self, columns: tuple[ColumnProfile, ...]) -> ColumnProfile | None:
+        numeric_columns = [
+            column
+            for column in columns
+            if any(token in column.data_type.lower() for token in ("int", "real", "float", "double", "numeric", "decimal"))
+        ]
+        if numeric_columns:
+            return numeric_columns[0]
+
+        identifier_columns = [
+            column
+            for column in columns
+            if column.is_primary_key or self._contains_any(column.name.lower(), ("id", "no", "date", "time"))
+        ]
+        if identifier_columns:
+            return identifier_columns[0]
+        return columns[0] if columns else None
+
+    def _build_generic_insert_sql(self, question: str, analysis: QueryAnalysis, hit: RetrievalHit) -> str | None:
+        if "insert" not in analysis.intent_tags:
+            return None
+
+        assignments = self._extract_column_assignments(question, tuple(hit.columns))
+        if not assignments:
+            return None
+
+        column_names = []
+        values = []
+        for column in hit.columns:
+            if column.name not in assignments:
+                continue
+            column_names.append(column.name)
+            values.append(self._format_sql_literal(assignments[column.name], column))
+
+        if not column_names:
+            return None
+        columns_clause = ", ".join(column_names)
+        values_clause = ", ".join(values)
+        return f"INSERT INTO {hit.table_name} ({columns_clause}) VALUES ({values_clause});"
+
+    def _build_generic_update_sql(self, question: str, analysis: QueryAnalysis, hit: RetrievalHit) -> str | None:
+        if "update" not in analysis.intent_tags:
+            return None
+
+        set_assignments = self._extract_column_assignments(question, tuple(hit.columns), require_update_marker=True)
+        if not set_assignments:
+            return None
+
+        where_column = self._pick_where_column(hit.columns)
+        if where_column is None:
+            return None
+        where_value = self._extract_where_value(question, where_column)
+        if where_value is None:
+            return None
+
+        set_clauses = []
+        for column in hit.columns:
+            if column.name == where_column.name or column.name not in set_assignments:
+                continue
+            set_clauses.append(f"{column.name} = {self._format_sql_literal(set_assignments[column.name], column)}")
+
+        if not set_clauses:
+            return None
+        where_clause = f"{where_column.name} = {self._format_sql_literal(where_value, where_column)}"
+        return f"UPDATE {hit.table_name} SET {', '.join(set_clauses)} WHERE {where_clause};"
+
+    def _build_generic_create_table_sql(self, question: str, analysis: QueryAnalysis) -> str | None:
+        if "create" not in analysis.intent_tags and not re.search(r"create\s+table", question, flags=re.IGNORECASE):
+            return None
+
+        table_name = self._extract_target_table_name(question, create_only=True)
+        if not table_name:
+            return None
+
+        columns = self._extract_column_definitions(question)
+        if not columns:
+            return None
+
+        column_sql = []
+        for index, (column_name, data_type) in enumerate(columns):
+            suffix = " PRIMARY KEY" if index == 0 and column_name.lower().endswith("id") else ""
+            column_sql.append(f"{column_name} {data_type}{suffix}")
+        return f"CREATE TABLE {table_name} ({', '.join(column_sql)});"
+
+    def _build_generic_add_column_sql(
+        self,
+        question: str,
+        analysis: QueryAnalysis,
+        retrievals: tuple[RetrievalHit, ...],
+    ) -> str | None:
+        if "alter" not in analysis.intent_tags and not re.search(r"add\s+column", question, flags=re.IGNORECASE):
+            return None
+
+        table_name = self._extract_target_table_name(question)
+        if not table_name and retrievals:
+            table_name = retrievals[0].table_name
+        if not table_name:
+            return None
+
+        column_definitions = self._extract_column_definitions(question)
+        if not column_definitions:
+            add_column_match = re.search(
+                r"(?:新增字段|增加字段|新增列|加列|add\s+column)\s+([A-Za-z_][A-Za-z0-9_]*)\s+(INTEGER|TEXT|REAL|BLOB|NUMERIC|DATETIME|DATE|FLOAT|DOUBLE|VARCHAR(?:\(\d+\))?)",
+                question,
+                flags=re.IGNORECASE,
+            )
+            if add_column_match is None:
+                return None
+            column_definitions = [(add_column_match.group(1), add_column_match.group(2).upper())]
+
+        column_name, data_type = column_definitions[0]
+        return f"ALTER TABLE {table_name} ADD COLUMN {column_name} {data_type};"
+
+    def _extract_target_table_name(self, question: str, create_only: bool = False) -> str | None:
+        patterns = [
+            r"(?:create\s+table|创建(?:一张)?表|新建(?:一张)?表)\s+([A-Za-z_][A-Za-z0-9_]*)",
+        ]
+        if not create_only:
+            patterns.extend(
+                [
+                    r"([A-Za-z_][A-Za-z0-9_]*)\s*表",
+                    r"table\s+([A-Za-z_][A-Za-z0-9_]*)",
+                ]
+            )
+
+        for pattern in patterns:
+            match = re.search(pattern, question, flags=re.IGNORECASE)
+            if match is not None:
+                return match.group(1)
+        return None
+
+    def _extract_column_definitions(self, question: str) -> list[tuple[str, str]]:
+        matches = re.findall(
+            r"([A-Za-z_][A-Za-z0-9_]*)\s+(INTEGER|TEXT|REAL|BLOB|NUMERIC|DATETIME|DATE|FLOAT|DOUBLE|VARCHAR(?:\(\d+\))?)",
+            question,
+            flags=re.IGNORECASE,
+        )
+        columns: list[tuple[str, str]] = []
+        for column_name, data_type in matches:
+            if column_name.lower() in {"table", "create", "column", "add"}:
+                continue
+            columns.append((column_name, data_type.upper()))
+        return columns
+
+    def _extract_column_assignments(
+        self,
+        question: str,
+        columns: tuple[ColumnProfile, ...],
+        require_update_marker: bool = False,
+    ) -> dict[str, str]:
+        assignments: dict[str, str] = {}
+        for segment in re.split(r"[，,；;。]\s*", question):
+            normalized_segment = segment.strip()
+            if not normalized_segment:
+                continue
+            for column in columns:
+                if not self._segment_mentions_column(normalized_segment, column.name):
+                    continue
+                if require_update_marker and not re.search(r"(?:改成|改为|更新为|设为|修改为|=|:=)", normalized_segment, flags=re.IGNORECASE):
+                    continue
+                value = self._extract_assignment_value(normalized_segment, column.name)
+                if value is not None:
+                    assignments[column.name] = value
+        return assignments
+
+    def _extract_assignment_value(self, segment: str, column_name: str) -> str | None:
+        patterns = [
+            rf"{re.escape(column_name)}\s*(?:=|:=|为|是|:|：|改成|改为|更新为|设为|修改为)\s*('?[^'，,；;。]+'?|\"?[^\"，,；;。]+\"?)",
+            rf"{re.escape(column_name)}\s+('?[^'，,；;。]+'?|\"?[^\"，,；;。]+\"?)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, segment, flags=re.IGNORECASE)
+            if match is None:
+                continue
+            return match.group(1).strip().strip('"').strip("'")
+        return None
+
+    def _pick_where_column(self, columns: tuple[ColumnProfile, ...]) -> ColumnProfile | None:
+        for column in columns:
+            if column.is_primary_key:
+                return column
+        return columns[0] if columns else None
+
+    def _extract_where_value(self, question: str, column: ColumnProfile) -> str | None:
+        patterns = [
+            rf"(?:其中|where|当|把).*?{re.escape(column.name)}\s*(?:=|为|是|:|：)\s*('?[^'，,；;。]+'?|\"?[^\"，,；;。]+\"?)",
+            rf"{re.escape(column.name)}\s*(?:=|为|是|:|：)\s*('?[^'，,；;。]+'?|\"?[^\"，,；;。]+\"?)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, question, flags=re.IGNORECASE)
+            if match is None:
+                continue
+            return match.group(1).strip().strip('"').strip("'")
+        return None
+
+    def _segment_mentions_column(self, segment: str, column_name: str) -> bool:
+        pattern = rf"(?<![A-Za-z0-9_]){re.escape(column_name)}(?![A-Za-z0-9_])"
+        return re.search(pattern, segment, flags=re.IGNORECASE) is not None
+
+    def _format_sql_literal(self, value: str, column: ColumnProfile) -> str:
+        cleaned = value.strip()
+        if cleaned.lower() in {"null", "none"}:
+            return "NULL"
+        if self._is_numeric_value(cleaned) and any(token in column.data_type.lower() for token in ("int", "real", "float", "double", "numeric", "decimal")):
+            return cleaned
+        escaped = cleaned.replace("'", "''")
+        return f"'{escaped}'"
+
+    def _is_numeric_value(self, value: str) -> bool:
+        return re.fullmatch(r"-?\d+(?:\.\d+)?", value) is not None
 
     def _contains_any(self, text: str, terms: tuple[str, ...]) -> bool:
         return any(term in text for term in terms)

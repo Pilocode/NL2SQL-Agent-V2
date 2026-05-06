@@ -12,6 +12,13 @@ class LLMResponse:
 
 
 @dataclass(frozen=True)
+class LLMCallResult:
+    response: LLMResponse | None
+    failure_type: str | None = None
+    failure_message: str | None = None
+
+
+@dataclass(frozen=True)
 class LLMProfile:
     model: str
     temperature: float = 0.1
@@ -47,10 +54,29 @@ class OpenAICompatibleLLM:
         model: str | None = None,
         enable_thinking: bool | None = None,
     ) -> LLMResponse | None:
+        result = self.chat_with_diagnostics(
+            system_prompt=system_prompt,
+            user_prompt=user_prompt,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            model=model,
+            enable_thinking=enable_thinking,
+        )
+        return result.response
+
+    def chat_with_diagnostics(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        temperature: float = 0.1,
+        max_tokens: int = 1200,
+        model: str | None = None,
+        enable_thinking: bool | None = None,
+    ) -> LLMCallResult:
         if not self.is_available():
-            return None
+            return LLMCallResult(response=None, failure_type="not_configured", failure_message="LLM 未配置可用的 API Key 或模型名。")
         if self.client is None:
-            return None
+            return LLMCallResult(response=None, failure_type="client_unavailable", failure_message="LLM 客户端未初始化。")
 
         request_model = (model or self.model).strip()
         request_thinking = self.enable_thinking if enable_thinking is None else enable_thinking
@@ -68,19 +94,23 @@ class OpenAICompatibleLLM:
                 max_tokens=max_tokens,
                 extra_body=extra_body,
             )
-        except Exception:
-            return None
+        except Exception as error:
+            return LLMCallResult(
+                response=None,
+                failure_type="request_error",
+                failure_message=f"LLM 调用失败: {error}",
+            )
 
         choices = getattr(response, "choices", None) or []
         if not choices:
-            return None
+            return LLMCallResult(response=None, failure_type="empty_choices", failure_message="LLM 返回为空 choices。")
         message = getattr(choices[0], "message", None)
         content = self._normalize_message_content(getattr(message, "content", None))
         if not content:
-            return None
+            return LLMCallResult(response=None, failure_type="empty_content", failure_message="LLM 已返回响应，但 message.content 为空。")
 
         response_model = getattr(response, "model", None) or request_model
-        return LLMResponse(content=content, model=str(response_model))
+        return LLMCallResult(response=LLMResponse(content=content, model=str(response_model)))
 
     def _normalize_message_content(self, content: object) -> str:
         if isinstance(content, str):

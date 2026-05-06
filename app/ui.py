@@ -176,7 +176,7 @@ def _render_detail_panel(settings, operation_mode: str) -> None:
                 st.caption(response.draft.rationale)
                 st.code(response.draft.sql, language="sql")
             else:
-                st.write("当前未生成 SQL。")
+                st.write("当前未生成 SQL，流程已在生成阶段终止。")
 
             st.write("操作模式:", OPERATION_MODE_LABELS.get(response.operation_mode, response.operation_mode.upper()))
             if response.validation.statement_type:
@@ -186,9 +186,19 @@ def _render_detail_panel(settings, operation_mode: str) -> None:
                 st.write("最终 SQL:")
                 st.code(response.final_sql, language="sql")
 
+        if response.generation_diagnostics is not None:
+            with st.expander("第3阶段调试面板", expanded=False):
+                st.write("失败类型:", response.generation_diagnostics.strategy)
+                st.write("诊断信息:", response.generation_diagnostics.message)
+                if response.generation_diagnostics.raw_response_preview is not None:
+                    st.write("原始返回预览:")
+                    st.code(response.generation_diagnostics.raw_response_preview, language="text")
+                else:
+                    st.write("本次没有可展示的原始返回预览。")
+
         with st.expander("自动修复记录", expanded=False):
             if not response.repairs:
-                st.write("本次没有触发自动修复。")
+                st.write("当前版本已关闭自动修复；生成失败或校验失败后会直接终止后续阶段。")
             for repair in response.repairs:
                 st.caption(repair.reason)
                 st.write("修复前")

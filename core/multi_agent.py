@@ -4,25 +4,10 @@ import json
 import re
 
 from core.llm_client import LLMProfile, OpenAICompatibleLLM
-from core.models import (
-    AgentTrace,
-    ExampleCandidate,
-    OPERATION_MODE_DDL,
-    OPERATION_MODE_DML,
-    OPERATION_MODE_QUERY,
-    QueryAnalysis,
-    QueryExecution,
-    RepairResult,
-    RetrievalHit,
-    RoutedDatabase,
-    SQLDraft,
-    SemanticInterpretation,
-    TableProfile,
-)
+from core.models import AgentTrace, ExampleCandidate, GenerationDiagnostics, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, QueryAnalysis, QueryExecution, RetrievalHit, RoutedDatabase, SQLDraft, SemanticInterpretation, TableProfile
 from core.prompt_builder import PromptBuilder
 from core.result_explainer import ResultExplainer
 from core.sql_generator import SQLGenerator
-from core.sql_repairer import SQLRepairer
 
 
 CODE_BLOCK_PATTERN = re.compile(r"^```(?:json|sql)?\s*|\s*```$", re.IGNORECASE)
@@ -270,7 +255,7 @@ class SQLGenerationAgent:
         routed_database: RoutedDatabase | None,
         operation_mode: str = OPERATION_MODE_QUERY,
         schema_catalog: tuple[TableProfile, ...] = (),
-    ) -> tuple[SQLDraft | None, AgentTrace, str]:
+    ) -> tuple[SQLDraft | None, AgentTrace, str, GenerationDiagnostics | None]:
         prompt = self.prompt_builder.build_generation_prompt(
             question,
             retrievals,
@@ -282,7 +267,7 @@ class SQLGenerationAgent:
             schema_catalog,
         )
         if self.llm.is_available():
-            response = self.llm.chat(
+            llm_result = self.llm.chat_with_diagnostics(
                 system_prompt="You are a careful SQLite SQL generation agent.",
                 user_prompt=prompt,
                 model=self.profile.model,
@@ -290,6 +275,7 @@ class SQLGenerationAgent:
                 max_tokens=self.profile.max_tokens,
                 enable_thinking=self.profile.enable_thinking,
             )
+            response = llm_result.response
             sanitized_sql = self._sanitize_sql(response.content if response is not None else "", operation_mode)
             if sanitized_sql:
                 return (
@@ -301,116 +287,58 @@ class SQLGenerationAgent:
                     ),
                     AgentTrace("generation_agent", "llm", "已使用快速生成 LLM 生成 SQL"),
                     prompt,
+                    None,
                 )
-
-        fallback = None
-        if operation_mode == OPERATION_MODE_QUERY or (
-            operation_mode == OPERATION_MODE_DML and not any(tag in {"insert", "update", "delete"} for tag in analysis.intent_tags)
-        ):
-            fallback = self.fallback_generator.generate(
-                question,
-                analysis,
-                retrievals,
-                example_candidates,
-                prompt,
-                semantic_interpretation,
-            )
-        if fallback is not None:
-            strategy = "fallback_rule" if self.llm.is_available() else "rule_only"
-            detail = "生成 LLM 不可用或未返回有效 SQL，已回退到增强规则与样例。"
-            return fallback, AgentTrace("generation_agent", strategy, detail), prompt
-
-        detail = "生成 LLM 与规则回退均未能生成 SQL。"
-        return None, AgentTrace("generation_agent", "failed", detail), prompt
-
-    def _sanitize_sql(self, content: str, operation_mode: str) -> str:
-        cleaned = CODE_BLOCK_PATTERN.sub("", content.strip())
-        keyword_pattern = r"(select\b.*)"
-        if operation_mode == OPERATION_MODE_DML:
-            keyword_pattern = r"((?:select|insert|update|delete)\b.*)"
-        elif operation_mode == OPERATION_MODE_DDL:
-            keyword_pattern = r"((?:create|alter|drop)\b.*)"
-        match = re.search(keyword_pattern, cleaned, flags=re.IGNORECASE | re.DOTALL)
-        if match is not None:
-            cleaned = match.group(1).strip()
-        if cleaned and not cleaned.endswith(";"):
-            cleaned = f"{cleaned};"
-        return cleaned
-
-
-class SQLRepairAgent:
-    def __init__(self, llm: OpenAICompatibleLLM, prompt_builder: PromptBuilder, fallback_repairer: SQLRepairer, profile: LLMProfile):
-        self.llm = llm
-        self.prompt_builder = prompt_builder
-        self.fallback_repairer = fallback_repairer
-        self.profile = profile
-
-    def repair(
-        self,
-        question: str,
-        failed_sql: str,
-        error_message: str,
-        analysis: QueryAnalysis,
-        retrievals: tuple[RetrievalHit, ...],
-        example_candidates: tuple[ExampleCandidate, ...],
-        semantic_interpretation: SemanticInterpretation | None,
-        routed_database: RoutedDatabase | None,
-        operation_mode: str = OPERATION_MODE_QUERY,
-        schema_catalog: tuple[TableProfile, ...] = (),
-    ) -> tuple[RepairResult | None, AgentTrace]:
-        if self.llm.is_available():
-            prompt = self.prompt_builder.build_repair_prompt(
-                question,
-                failed_sql,
-                error_message,
-                retrievals,
-                example_candidates,
-                analysis,
-                semantic_interpretation,
-                routed_database,
-                operation_mode,
-                schema_catalog,
-            )
-            response = self.llm.chat(
-                system_prompt="You are a careful SQLite SQL repair agent.",
-                user_prompt=prompt,
-                model=self.profile.model,
-                temperature=self.profile.temperature,
-                max_tokens=self.profile.max_tokens,
-                enable_thinking=self.profile.enable_thinking,
-            )
-            sanitized_sql = self._sanitize_sql(response.content if response is not None else "", operation_mode)
-            if sanitized_sql and sanitized_sql != failed_sql.strip():
-                return (
-                    RepairResult(
-                        sql=sanitized_sql,
-                        strategy="llm_repair_agent",
-                        message=f"LLM Repair Agent 已根据错误信息尝试修复: {error_message}",
-                    ),
-                    AgentTrace("repair_agent", "llm", "已使用快速修复 LLM 修复 SQL"),
+            if response is not None:
+                diagnostics = GenerationDiagnostics(
+                    strategy="llm_invalid_output",
+                    message="LLM 已返回内容，但清洗后未提取到有效 SQL。",
+                    raw_response_preview=self._build_preview(response.content),
                 )
+                return None, AgentTrace(
+                    "generation_agent",
+                    "llm_invalid_output",
+                    self._build_invalid_output_message(response.content, operation_mode),
+                ), prompt, diagnostics
+            diagnostics = GenerationDiagnostics(
+                strategy=llm_result.failure_type or "llm_call_failed",
+                message=llm_result.failure_message or "LLM 调用失败，未返回可用内容。",
+            )
+            return None, AgentTrace(
+                "generation_agent",
+                llm_result.failure_type or "llm_call_failed",
+                llm_result.failure_message or "LLM 调用失败，未返回可用内容。",
+            ), prompt, diagnostics
 
-        repaired = self.fallback_repairer.repair(
+        fallback = self.fallback_generator.generate(
             question,
-            failed_sql,
-            error_message,
             analysis,
             retrievals,
             example_candidates,
-            self.prompt_builder.build_generation_prompt(
-                question,
-                retrievals,
-                example_candidates,
-                analysis,
-                semantic_interpretation,
-                routed_database,
-                operation_mode,
-                schema_catalog,
-            ),
+            prompt,
+            semantic_interpretation,
         )
-        strategy = "fallback_rule" if self.llm.is_available() else "rule_only"
-        detail = "修复 LLM 不可用或未返回有效修复，已回退到规则修复。"
-        return repaired, AgentTrace("repair_agent", strategy, detail)
+        if fallback is not None:
+            return fallback, AgentTrace("generation_agent", "rule_only", "LLM 未启用，已使用本地规则与样例生成 SQL。"), prompt, None
+
+        detail = "SQL 生成失败：LLM 未启用，且当前数据库的本地规则与样例未能生成有效 SQL。"
+        diagnostics = GenerationDiagnostics(
+            strategy="failed",
+            message=detail,
+        )
+        return None, AgentTrace("generation_agent", "failed", detail), prompt, diagnostics
+
+    def _build_invalid_output_message(self, content: str, operation_mode: str) -> str:
+        mode_hint = "SELECT"
+        if operation_mode == OPERATION_MODE_DML:
+            mode_hint = "SELECT / INSERT / UPDATE / DELETE"
+        elif operation_mode == OPERATION_MODE_DDL:
+            mode_hint = "CREATE / ALTER / DROP"
+        preview = " ".join(content.strip().split())[:180] or "<empty>"
+        return f"LLM 已返回内容，但清洗后未提取到有效 SQL。当前模式要求输出以 {mode_hint} 开头的单条 SQL。原始返回预览: {preview}"
+
+    def _build_preview(self, content: str) -> str:
+        return " ".join(content.strip().split())[:500] or "<empty>"
 
     def _sanitize_sql(self, content: str, operation_mode: str) -> str:
         cleaned = CODE_BLOCK_PATTERN.sub("", content.strip())
@@ -425,7 +353,6 @@ class SQLRepairAgent:
         if cleaned and not cleaned.endswith(";"):
             cleaned = f"{cleaned};"
         return cleaned
-
 
 class AnswerAgent:
     def __init__(self, llm: OpenAICompatibleLLM, prompt_builder: PromptBuilder, fallback_explainer: ResultExplainer, profile: LLMProfile):

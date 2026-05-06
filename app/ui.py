@@ -46,7 +46,7 @@ def render_app() -> None:
             st.rerun()
 
     with detail_col:
-        _render_detail_panel(settings, operation_mode)
+        _render_detail_panel(orchestrator, settings, operation_mode)
 
 
 def _handle_user_question(orchestrator: NL2SQLOrchestrator, question: str, operation_mode: str) -> None:
@@ -84,6 +84,7 @@ def _handle_user_question(orchestrator: NL2SQLOrchestrator, question: str, opera
 
     _refresh_current_database_summary(orchestrator, response)
     st.session_state["latest_response"] = response
+    st.session_state["pending_ddl_response"] = response if _response_is_awaiting_ddl_confirmation(response) else None
     st.session_state["chat_history"].append(
         {
             "role": "assistant",
@@ -111,7 +112,7 @@ def _render_chat_history() -> None:
             st.dataframe(result_frame, width="stretch")
 
 
-def _render_detail_panel(settings, operation_mode: str) -> None:
+def _render_detail_panel(orchestrator: NL2SQLOrchestrator, settings, operation_mode: str) -> None:
     response: NL2SQLResponse | None = st.session_state.get("latest_response")
     schema_document = load_schema_document(settings.schema_metadata_path)
     schema_catalog = load_schema_catalog(settings.schema_metadata_path, settings.semantic_layer_path)
@@ -186,6 +187,34 @@ def _render_detail_panel(settings, operation_mode: str) -> None:
                 st.write("最终 SQL:")
                 st.code(response.final_sql, language="sql")
 
+        if _response_is_awaiting_ddl_confirmation(response):
+            st.warning(response.execution_confirmation.message)
+            confirm_col, cancel_col = st.columns(2, gap="small")
+            with confirm_col:
+                if st.button("确认执行 DDL", use_container_width=True, key="confirm_ddl_execution"):
+                    confirmed_response = orchestrator.confirm_ddl_response(response)
+                    _refresh_current_database_summary(orchestrator, confirmed_response)
+                    st.session_state["latest_response"] = confirmed_response
+                    st.session_state["pending_ddl_response"] = None
+                    st.session_state["chat_history"].append(
+                        {
+                            "role": "assistant",
+                            "content": _format_assistant_message(confirmed_response),
+                            "response": confirmed_response,
+                        }
+                    )
+                    st.rerun()
+            with cancel_col:
+                if st.button("取消本次执行", use_container_width=True, key="cancel_ddl_execution"):
+                    st.session_state["pending_ddl_response"] = None
+                    st.session_state["chat_history"].append(
+                        {
+                            "role": "assistant",
+                            "content": "已取消本次 DDL 执行，当前只保留生成与校验结果，未对数据库结构做任何修改。",
+                        }
+                    )
+                    st.rerun()
+
         if response.generation_diagnostics is not None:
             with st.expander("第3阶段调试面板", expanded=False):
                 st.write("失败类型:", response.generation_diagnostics.strategy)
@@ -233,6 +262,7 @@ def _init_session_state() -> None:
     st.session_state.setdefault("active_database_name", None)
     st.session_state.setdefault("operation_mode", DEFAULT_UI_OPERATION_MODE)
     st.session_state.setdefault("active_operation_mode", DEFAULT_UI_OPERATION_MODE)
+    st.session_state.setdefault("pending_ddl_response", None)
 
 
 def _format_assistant_message(response: NL2SQLResponse) -> str:
@@ -347,16 +377,22 @@ def _render_stage_bubbles(updates: list[StageUpdate], highlight_latest: bool = F
 
 def _stage_title(stage: str, index: int) -> str:
     labels = {
-        "analysis": "阶段 1 · 问题分析",
-        "thinking": "阶段 2 · 语义澄清",
-        "retrieval_refresh": "阶段 3 · 召回刷新",
-        "generation": "阶段 4 · SQL 生成",
-        "validation": "阶段 5 · SQL 校验",
-        "repair": "阶段 6 · SQL 修复",
-        "execution": "阶段 7 · SQL 执行",
-        "answer": "阶段 8 · 结果整理",
+        "analysis": "问题分析",
+        "analysis_decision": "分析决策",
+        "thinking": "语义澄清",
+        "retrieval_refresh": "召回刷新",
+        "generation": "SQL 生成",
+        "validation": "SQL 校验",
+        "confirmation": "执行确认",
+        "execution": "SQL 执行",
+        "answer": "结果整理",
     }
-    return labels.get(stage, f"阶段 {index} · 处理中")
+    return f"阶段 {index} · {labels.get(stage, '处理中')}"
+
+
+def _response_is_awaiting_ddl_confirmation(response: NL2SQLResponse) -> bool:
+    confirmation = response.execution_confirmation
+    return bool(confirmation is not None and confirmation.required and not confirmation.confirmed)
 
 
 def _render_operation_mode_selector(database_name: str) -> str:

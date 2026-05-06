@@ -6,18 +6,27 @@
 
 - 把自然语言转换成 SQL，并直接执行。
 - 在 DML 模式下执行查询、插入、更新、删除。
-- 在 DDL 模式下创建表、加列、改表结构。
+- 在 DDL 模式下生成创建表、加列、删表等语句，并在执行前进行二次确认。
 - 在页面里切换默认 Chinook 库和本地上传的 SQLite 库。
 - 自动展示当前库表结构摘要，并在成功执行非 SELECT SQL 后自动刷新。
 
 ## 当前项目特性
 
 - Streamlit 聊天式界面。
-- Analysis / Thinking / Generation / Validation / Repair / Execution 分阶段流水线。
+- Analysis / Thinking / Generation / Validation / Confirmation / Execution / Answer 分阶段流水线。
+- 对 unsupported 和 irrelevant 请求在 Analysis 阶段提前终止，不再伪装成 SQL 生成失败。
+- DDL 语句在展示最终 SQL 后需要用户二次确认，确认前不会修改数据库结构。
 - OpenAI 兼容接口接入，支持通过环境变量切换模型服务。
 - 本地数据库资产构建：metadata、semantic layer、examples。
 - 多数据库路由与本地示例库管理。
 - 已包含 Chinook 和多个本地 SQLite 演示库。
+
+## 当前流程说明
+
+- Query / DML 请求在 SQL 校验通过后会直接执行。
+- DDL 请求在 SQL 校验通过后先进入 Confirmation 阶段，用户确认后才会真正执行。
+- 删除整个数据库、账号权限管理、文件系统或命令执行这类请求会在 Analysis 阶段被标记为 unsupported。
+- 天气、闲聊、写作这类与数据库无关的问题会在 Analysis 阶段被标记为 irrelevant。
 
 ## 快速开始
 
@@ -101,8 +110,9 @@ python scripts/create_library_demo_db.py
 
 1. 打开页面后，先选择 `library_demo.sqlite`。
 2. 在 DML 模式中执行一条查询或更新。
-3. 切换到 DDL 模式，执行建表或加列。
-4. 打开“当前库表结构摘要”，确认结构已自动刷新。
+3. 切换到 DDL 模式，生成建表或加列 SQL，并点击确认执行。
+4. 打开“当前库表结构摘要”，确认结构已在执行后自动刷新。
+5. 再测试一条 unsupported 请求，例如“删除一整个数据库”，确认系统会直接给出不支持提示。
 
 ## 适用场景
 
@@ -115,3 +125,4 @@ python scripts/create_library_demo_db.py
 - 当前仓库以 SQLite 为主。
 - 默认库为 Chinook。
 - 本地上传库和默认 SQLite 库在成功执行非 SELECT SQL 后，摘要会自动刷新。
+- 当前主流程已关闭自动 repair；生成失败或校验失败后会直接终止后续阶段。

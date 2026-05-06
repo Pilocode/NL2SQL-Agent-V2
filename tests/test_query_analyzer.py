@@ -39,6 +39,30 @@ class QueryAnalyzerTestCase(unittest.TestCase):
         self.assertIn("专辑", analysis.entity_hints)
         self.assertEqual(analysis.top_k, 5)
 
+    def test_marks_drop_database_as_unsupported(self) -> None:
+        analysis = self.analyzer.analyze("删除一整个数据库")
+
+        self.assertEqual(analysis.generation_status, "unsupported")
+        self.assertIn("数据库级管理", analysis.generation_reason)
+
+    def test_marks_permission_management_as_unsupported(self) -> None:
+        analysis = self.analyzer.analyze("给 analyst 账号授权只读权限")
+
+        self.assertEqual(analysis.generation_status, "unsupported")
+        self.assertIn("权限管理", analysis.generation_reason)
+
+    def test_marks_shell_command_as_unsupported(self) -> None:
+        analysis = self.analyzer.analyze("帮我用 powershell 删除这个数据库文件")
+
+        self.assertEqual(analysis.generation_status, "unsupported")
+        self.assertIn("Shell 命令", analysis.generation_reason)
+
+    def test_marks_irrelevant_request(self) -> None:
+        analysis = self.analyzer.analyze("今天天气怎么样")
+
+        self.assertEqual(analysis.generation_status, "irrelevant")
+        self.assertTrue(analysis.generation_reason)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Iterator
 
 from app.config import Settings
@@ -8,7 +8,7 @@ from core.database_registry import load_database_registry
 from core.database_router import DatabaseRouter
 from core.example_retriever import ExampleRetriever
 from core.llm_client import LLMProfile, OpenAICompatibleLLM
-from core.models import AgentTrace, ExampleCandidate, NL2SQLResponse, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, PipelineResult, QueryExecution, SemanticInterpretation, StageUpdate, ValidationResult
+from core.models import AgentTrace, ExampleCandidate, ExecutionConfirmation, NL2SQLResponse, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, PipelineResult, QueryExecution, SemanticInterpretation, StageUpdate, ValidationResult
 from core.multi_agent import AnswerAgent, QueryAnalysisAgent, SQLGenerationAgent, SemanticThinkingAgent
 from core.prompt_builder import PromptBuilder
 from core.query_analyzer import QueryAnalyzer
@@ -144,6 +144,48 @@ class NL2SQLOrchestrator:
             raise RuntimeError("NL2SQL pipeline ended without producing a final response")
         return final_response
 
+    def confirm_ddl_response(self, response: NL2SQLResponse) -> NL2SQLResponse:
+        confirmation = response.execution_confirmation
+        if confirmation is None or not confirmation.required or confirmation.confirmed:
+            return response
+        if response.final_sql is None:
+            raise ValueError("Cannot confirm DDL execution without validated SQL")
+
+        traces = list(response.agent_traces)
+        stage_updates = list(response.stage_updates)
+        confirmed_message = self._build_stage_message("confirmation", "已收到二次确认，开始执行 DDL SQL。")
+        stage_updates.append(confirmed_message)
+        database = response.pipeline.routed_database
+        database_id = database.database_id if database is not None else self.default_database_id
+        execution = self._execute_sql(response.final_sql, traces, database_id, database)
+        execution_message = self._build_execution_stage_message(execution)
+        stage_updates.append(execution_message)
+        answer_text = response.answer_text
+        if execution is not None:
+            answer_text, answer_trace = self.answer_agent.answer(
+                response.pipeline.analysis.original_question,
+                response.final_sql,
+                execution,
+                response.operation_mode,
+            )
+            traces.append(answer_trace)
+            answer_message = self._build_stage_message("answer", "结果解释完成，正在整理最终回答。")
+            stage_updates.append(answer_message)
+
+        return replace(
+            response,
+            execution_confirmation=ExecutionConfirmation(
+                required=True,
+                confirmed=True,
+                message="DDL 已经由用户确认并执行。",
+                statement_type=confirmation.statement_type,
+            ),
+            execution=execution,
+            answer_text=answer_text,
+            agent_traces=tuple(traces),
+            stage_updates=tuple(stage_updates),
+        )
+
     def answer_question_stream(self, question: str, max_repair_rounds: int = 2, operation_mode: str = OPERATION_MODE_QUERY) -> Iterator[tuple[str, StageUpdate | NL2SQLResponse]]:
         pipeline, initial_analysis_trace = self._prepare_pipeline(question, operation_mode)
         traces = [initial_analysis_trace]
@@ -169,6 +211,39 @@ class NL2SQLOrchestrator:
                     error_message=validation.message,
                 ),
                 answer_text=validation.message,
+                agent_traces=tuple(traces),
+                stage_updates=tuple(stage_updates),
+                operation_mode=operation_mode,
+            )
+            yield "final", response
+            return
+
+        if pipeline.analysis.generation_status != "generate":
+            reason = pipeline.analysis.generation_reason or (
+                "当前请求超出系统支持范围，未进入 SQL 生成。"
+                if pipeline.analysis.generation_status == "unsupported"
+                else "当前问题与数据库操作无关，未进入 SQL 生成。"
+            )
+            decision_message = self._build_stage_message(
+                "analysis_decision",
+                reason,
+            )
+            stage_updates.append(decision_message)
+            yield "stage", decision_message
+            validation = ValidationResult(is_valid=False, message=reason, operation_mode=operation_mode)
+            response = NL2SQLResponse(
+                pipeline=pipeline,
+                prompt="",
+                draft=None,
+                validation=validation,
+                semantic_interpretation=None,
+                final_sql=None,
+                execution=QueryExecution(
+                    succeeded=False,
+                    sql="",
+                    error_message=reason,
+                ),
+                answer_text=reason,
                 agent_traces=tuple(traces),
                 stage_updates=tuple(stage_updates),
                 operation_mode=operation_mode,
@@ -345,6 +420,39 @@ class NL2SQLOrchestrator:
             yield "final", response
             return
 
+        if self._requires_ddl_confirmation(operation_mode, validation.statement_type):
+            confirmation_message = "DDL 语句已生成并校验通过。该语句会修改表结构，请在执行前进行二次确认。"
+            confirmation_stage = self._build_stage_message("confirmation", confirmation_message)
+            stage_updates.append(confirmation_stage)
+            yield "stage", confirmation_stage
+            response = NL2SQLResponse(
+                pipeline=pipeline,
+                prompt=prompt,
+                draft=draft,
+                validation=validation,
+                semantic_interpretation=semantic_interpretation,
+                generation_diagnostics=generation_diagnostics,
+                execution_confirmation=ExecutionConfirmation(
+                    required=True,
+                    confirmed=False,
+                    message=confirmation_message,
+                    statement_type=validation.statement_type,
+                ),
+                final_sql=current_sql or None,
+                execution=QueryExecution(
+                    succeeded=False,
+                    sql=current_sql,
+                    statement_type=validation.statement_type,
+                    error_message=confirmation_message,
+                ),
+                answer_text=confirmation_message,
+                agent_traces=tuple(traces),
+                stage_updates=tuple(stage_updates),
+                operation_mode=operation_mode,
+            )
+            yield "final", response
+            return
+
         execution = self._execute_sql(
             current_sql,
             traces,
@@ -370,6 +478,7 @@ class NL2SQLOrchestrator:
             validation=validation,
             semantic_interpretation=semantic_interpretation,
             generation_diagnostics=generation_diagnostics,
+            execution_confirmation=ExecutionConfirmation(required=False, confirmed=True, message="当前请求无需额外执行确认。", statement_type=validation.statement_type),
             final_sql=current_sql or None,
             execution=execution,
             answer_text=answer_text,
@@ -378,6 +487,9 @@ class NL2SQLOrchestrator:
             operation_mode=operation_mode,
         )
         yield "final", response
+
+    def _requires_ddl_confirmation(self, operation_mode: str, statement_type: str | None) -> bool:
+        return operation_mode == OPERATION_MODE_DDL and statement_type in {"create", "alter", "drop"}
 
     def _execute_sql(
         self,

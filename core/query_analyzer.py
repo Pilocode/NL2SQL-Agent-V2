@@ -6,6 +6,62 @@ from core.models import QueryAnalysis
 
 
 TOKEN_PATTERN = re.compile(r"[\u4e00-\u9fff]+|[A-Za-z0-9_]+")
+UNSUPPORTED_OPERATION_GROUPS = (
+    (
+        "database_admin",
+        (
+            "删除整个数据库",
+            "删除一整个数据库",
+            "删库",
+            "drop database",
+            "删除数据库",
+            "清空数据库",
+            "重建数据库",
+        ),
+        "当前系统不支持数据库级管理操作，例如删除、清空或重建整个数据库。表级 DDL 可以生成，但执行前需要二次确认。",
+    ),
+    (
+        "backup_restore",
+        (
+            "备份数据库",
+            "恢复数据库",
+            "导出数据库",
+            "导入数据库",
+        ),
+        "当前系统不支持数据库备份、恢复或导入导出类操作。",
+    ),
+    (
+        "permissions_accounts",
+        (
+            "授权",
+            "撤权",
+            "grant",
+            "revoke",
+            "用户权限",
+            "创建账号",
+            "删除账号",
+            "创建用户",
+            "删除用户",
+            "role",
+        ),
+        "当前系统不支持账号、角色或权限管理操作。",
+    ),
+    (
+        "filesystem_or_command",
+        (
+            "文件系统",
+            "操作文件",
+            "删除文件",
+            "shell",
+            "bash",
+            "cmd",
+            "powershell",
+            "终端命令",
+            "运行脚本",
+        ),
+        "当前系统不支持文件系统、Shell 命令或脚本执行类操作。",
+    ),
+)
 STOPWORDS = {
     "的",
     "了",
@@ -123,6 +179,7 @@ class QueryAnalyzer:
         time_grain = self._extract_time_grain(normalized)
         top_k = self._extract_top_k(normalized)
         is_follow_up = any(marker in normalized for marker in ("再", "这些", "它们", "上面", "刚才", "继续"))
+        generation_status, generation_reason = self._assess_generation_feasibility(normalized, intent_tags, entity_hints)
         return QueryAnalysis(
             original_question=question,
             normalized_question=normalized,
@@ -134,6 +191,8 @@ class QueryAnalyzer:
             time_grain=time_grain,
             top_k=top_k,
             is_follow_up=is_follow_up,
+            generation_status=generation_status,
+            generation_reason=generation_reason,
         )
 
     def _normalize(self, question: str) -> str:
@@ -239,6 +298,35 @@ class QueryAnalyzer:
         if len(chinese_number) == 3 and chinese_number[1] == "十":
             return CHINESE_NUMBER_MAP.get(chinese_number[0], 0) * 10 + CHINESE_NUMBER_MAP.get(chinese_number[2], 0)
         return CHINESE_NUMBER_MAP.get(chinese_number)
+
+    def _assess_generation_feasibility(
+        self,
+        text: str,
+        intent_tags: list[str],
+        entity_hints: list[str],
+    ) -> tuple[str, str]:
+        for _, patterns, reason in UNSUPPORTED_OPERATION_GROUPS:
+            if any(pattern in text for pattern in patterns):
+                return "unsupported", reason
+
+        irrelevant_patterns = (
+            "天气",
+            "翻译",
+            "写一篇",
+            "作文",
+            "诗",
+            "小说",
+            "你好",
+            "你是谁",
+            "讲个笑话",
+        )
+        if any(pattern in text for pattern in irrelevant_patterns):
+            return "irrelevant", "当前问题与数据库查询或 SQLite 操作无关，系统不会生成 SQL。"
+
+        if not intent_tags and not entity_hints and len(text) <= 12:
+            return "irrelevant", "当前问题缺少明确的数据库操作目标或业务实体，系统无法判断应生成哪类 SQL。"
+
+        return "generate", ""
 
     def _build_domain_terms(self) -> tuple[str, ...]:
         terms = set(COMMON_TERMS)

@@ -9,6 +9,7 @@ from pathlib import Path
 from app.config import get_settings
 from app.orchestrator import NL2SQLOrchestrator
 from core.local_db_assets import build_local_database_assets, delete_local_database_assets
+from core.llm_client import LLMCallResult, LLMResponse
 from core.models import AgentTrace, GenerationDiagnostics, OPERATION_MODE_DDL, OPERATION_MODE_DML, SQLDraft
 from core.sql_validator import SQLValidator
 
@@ -35,6 +36,17 @@ class _FailingGenerationAgent:
     def generate(self, *args, **kwargs):
         diagnostics = GenerationDiagnostics(strategy=self.strategy, message=self.detail)
         return None, AgentTrace("generation_agent", self.strategy, self.detail), "stub prompt", diagnostics
+
+
+class _StubLLM:
+    def __init__(self, content: str) -> None:
+        self.content = content
+
+    def is_available(self) -> bool:
+        return True
+
+    def chat_with_diagnostics(self, *args, **kwargs):
+        return LLMCallResult(response=LLMResponse(content=self.content, model="stub-model"))
 
 
 class OperationModePipelineTestCase(unittest.TestCase):
@@ -107,11 +119,26 @@ class OperationModePipelineTestCase(unittest.TestCase):
         self.assertTrue(response.validation.is_valid)
         self.assertEqual(response.validation.statement_type, "create")
         self.assertEqual(response.operation_mode, OPERATION_MODE_DDL)
+        self.assertIsNotNone(response.execution_confirmation)
+        assert response.execution_confirmation is not None
+        self.assertTrue(response.execution_confirmation.required)
+        self.assertFalse(response.execution_confirmation.confirmed)
         self.assertIsNotNone(response.execution)
         assert response.execution is not None
-        self.assertTrue(response.execution.succeeded)
+        self.assertFalse(response.execution.succeeded)
         self.assertEqual(response.execution.statement_type, "create")
-        self.assertIn("数据库结构", response.answer_text)
+        self.assertIn("二次确认", response.answer_text)
+
+        confirmed_response = self.orchestrator.confirm_ddl_response(response)
+
+        self.assertIsNotNone(confirmed_response.execution_confirmation)
+        assert confirmed_response.execution_confirmation is not None
+        self.assertTrue(confirmed_response.execution_confirmation.confirmed)
+        self.assertIsNotNone(confirmed_response.execution)
+        assert confirmed_response.execution is not None
+        self.assertTrue(confirmed_response.execution.succeeded)
+        self.assertEqual(confirmed_response.execution.statement_type, "create")
+        self.assertIn("数据库结构", confirmed_response.answer_text)
 
         connection = sqlite3.connect(self.database_path)
         try:
@@ -219,9 +246,17 @@ class OperationModePipelineTestCase(unittest.TestCase):
         self.assertEqual(response.draft.source, "generic:create_table")
         self.assertIn("CREATE TABLE CourseRecord", response.draft.sql)
         self.assertTrue(response.validation.is_valid)
+        self.assertIsNotNone(response.execution_confirmation)
+        assert response.execution_confirmation is not None
+        self.assertTrue(response.execution_confirmation.required)
         self.assertIsNotNone(response.execution)
         assert response.execution is not None
-        self.assertTrue(response.execution.succeeded)
+        self.assertFalse(response.execution.succeeded)
+
+        confirmed_response = self.orchestrator.confirm_ddl_response(response)
+        self.assertIsNotNone(confirmed_response.execution)
+        assert confirmed_response.execution is not None
+        self.assertTrue(confirmed_response.execution.succeeded)
 
         connection = sqlite3.connect(self.database_path)
         try:
@@ -243,9 +278,17 @@ class OperationModePipelineTestCase(unittest.TestCase):
         self.assertEqual(response.draft.source, "generic:add_column")
         self.assertIn("ALTER TABLE Student ADD COLUMN nickname TEXT", response.draft.sql)
         self.assertTrue(response.validation.is_valid)
+        self.assertIsNotNone(response.execution_confirmation)
+        assert response.execution_confirmation is not None
+        self.assertTrue(response.execution_confirmation.required)
         self.assertIsNotNone(response.execution)
         assert response.execution is not None
-        self.assertTrue(response.execution.succeeded)
+        self.assertFalse(response.execution.succeeded)
+
+        confirmed_response = self.orchestrator.confirm_ddl_response(response)
+        self.assertIsNotNone(confirmed_response.execution)
+        assert confirmed_response.execution is not None
+        self.assertTrue(confirmed_response.execution.succeeded)
 
         connection = sqlite3.connect(self.database_path)
         try:
@@ -253,6 +296,77 @@ class OperationModePipelineTestCase(unittest.TestCase):
         finally:
             connection.close()
         self.assertIn("nickname", columns)
+
+    def test_generation_extracts_sql_from_wrapped_llm_output(self) -> None:
+        generation_agent = self.orchestrator.generation_agents[self.orchestrator.default_database_id]
+        generation_agent.llm = _StubLLM(
+            "下面是可执行 SQL：\n```sql\nCREATE TABLE WrappedCourse (course_id INTEGER PRIMARY KEY, course_name TEXT);\n```\n说明：如需更多字段可继续扩展。"
+        )
+
+        response = self.orchestrator.answer_question(
+            "创建一张课程表，包含英文表名 WrappedCourse 和字段 course_id INTEGER, course_name TEXT",
+            operation_mode=OPERATION_MODE_DDL,
+        )
+
+        self.assertIsNotNone(response.draft)
+        assert response.draft is not None
+        self.assertEqual(response.draft.source, "llm_generation_agent")
+        self.assertIn("CREATE TABLE WrappedCourse", response.draft.sql)
+        self.assertIsNone(response.generation_diagnostics)
+        self.assertTrue(response.validation.is_valid)
+        self.assertIsNotNone(response.execution_confirmation)
+        assert response.execution_confirmation is not None
+        self.assertTrue(response.execution_confirmation.required)
+        self.assertIsNotNone(response.execution)
+        assert response.execution is not None
+        self.assertFalse(response.execution.succeeded)
+
+        confirmed_response = self.orchestrator.confirm_ddl_response(response)
+        self.assertIsNotNone(confirmed_response.execution)
+        assert confirmed_response.execution is not None
+        self.assertTrue(confirmed_response.execution.succeeded)
+
+    def test_unsupported_request_stops_before_generation(self) -> None:
+        response = self.orchestrator.answer_question(
+            "删除一整个数据库",
+            operation_mode=OPERATION_MODE_DDL,
+        )
+
+        self.assertIsNone(response.draft)
+        self.assertFalse(response.validation.is_valid)
+        self.assertIn("数据库级管理", response.validation.message)
+        self.assertEqual([update.stage for update in response.stage_updates], ["analysis", "analysis_decision"])
+        self.assertIsNone(response.generation_diagnostics)
+
+    def test_ddl_waits_for_confirmation_before_execution(self) -> None:
+        self.orchestrator.generation_agents[self.orchestrator.default_database_id] = _StubGenerationAgent(
+            "DROP TABLE Student;"
+        )
+
+        response = self.orchestrator.answer_question(
+            "删除 Student 表",
+            operation_mode=OPERATION_MODE_DDL,
+        )
+
+        self.assertTrue(response.validation.is_valid)
+        self.assertEqual(response.validation.statement_type, "drop")
+        self.assertEqual([update.stage for update in response.stage_updates], ["analysis", "thinking", "generation", "validation", "confirmation"])
+        self.assertIsNotNone(response.execution_confirmation)
+        assert response.execution_confirmation is not None
+        self.assertTrue(response.execution_confirmation.required)
+        self.assertFalse(response.execution_confirmation.confirmed)
+        self.assertIsNotNone(response.execution)
+        assert response.execution is not None
+        self.assertFalse(response.execution.succeeded)
+
+        connection = sqlite3.connect(self.database_path)
+        try:
+            row = connection.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' AND name='Student'"
+            ).fetchone()
+        finally:
+            connection.close()
+        self.assertEqual(row, ("Student",))
 
     def test_generation_failure_short_circuits_after_generation(self) -> None:
         self.orchestrator.generation_agents[self.orchestrator.default_database_id] = _FailingGenerationAgent(

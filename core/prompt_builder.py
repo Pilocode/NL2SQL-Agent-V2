@@ -19,12 +19,16 @@ class PromptBuilder:
             "你的任务不是机械抽关键词，而是基于业务语义主动理解用户真正想查什么。\n"
             "要求：\n"
             "- 只输出 JSON\n"
-            "- JSON 字段固定为 normalized_question, tokens, intent_tags, metric_hints, entity_hints, ambiguous_terms, time_grain, top_k, is_follow_up\n"
+            "- JSON 字段固定为 normalized_question, tokens, intent_tags, metric_hints, entity_hints, ambiguous_terms, time_grain, top_k, is_follow_up, generation_status, generation_reason\n"
             "- intent_tags 可使用 count, ranking, average, sum, filter, comparison, insert, update, delete, create, alter, drop\n"
             "- time_grain 仅可使用 year, month, day 或 null\n"
+            "- generation_status 仅可使用 generate, unsupported, irrelevant\n"
             "- tokens 应是后续 schema 检索有价值的业务词，不要机械拆所有词\n"
             "- metric_hints 和 entity_hints 可以基于语义推断，不要求必须原词出现在问题里\n"
             "- 如果这是追问，请把 is_follow_up 设为 true\n"
+            "- 如果请求超出当前 SQLite SQL 能力边界，例如删除整个数据库、管理账号权限、操作文件系统、运行非 SQL 命令，请把 generation_status 设为 unsupported，并给出 generation_reason\n"
+            "- 如果问题与数据库无关，例如闲聊、天气、翻译、写文章，请把 generation_status 设为 irrelevant，并给出 generation_reason\n"
+            "- 只有在当前问题应该继续进入 SQL 生成时，generation_status 才设为 generate\n"
             "- 无法确定的字段请返回空数组、null 或 false，不要编造\n"
             f"当前操作模式: {mode_hint}\n"
             f"用户问题: {question}\n"
@@ -230,6 +234,8 @@ class PromptBuilder:
             f"ambiguous_terms={list(analysis.ambiguous_terms)}",
             f"time_grain={analysis.time_grain}",
             f"top_k={analysis.top_k}",
+            f"generation_status={analysis.generation_status}",
+            f"generation_reason={analysis.generation_reason}",
         ]
         return "; ".join(fields)
 

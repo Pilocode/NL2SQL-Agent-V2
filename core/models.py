@@ -49,6 +49,8 @@ class QueryAnalysis:
     time_grain: str | None = None
     top_k: int | None = None
     is_follow_up: bool = False
+    generation_status: str = "generate"
+    generation_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -171,6 +173,14 @@ class GenerationDiagnostics:
 
 
 @dataclass(frozen=True)
+class ExecutionConfirmation:
+    required: bool
+    confirmed: bool = False
+    message: str = ""
+    statement_type: str | None = None
+
+
+@dataclass(frozen=True)
 class NL2SQLResponse:
     pipeline: PipelineResult
     prompt: str
@@ -178,6 +188,7 @@ class NL2SQLResponse:
     validation: ValidationResult
     semantic_interpretation: SemanticInterpretation | None = None
     generation_diagnostics: GenerationDiagnostics | None = None
+    execution_confirmation: ExecutionConfirmation | None = None
     repairs: tuple[RepairStep, ...] = ()
     final_sql: str | None = None
     execution: QueryExecution | None = None

@@ -1,0 +1,15 @@
+{
+  "table_aliases": {},
+  "column_aliases": {},
+  "database_summary": "SQLite 数据库 test_db。",
+  "table_descriptions": {},
+  "column_descriptions": {},
+  "summary_terms": {
+    "database": [
+      "sqlite",
+      "test_db"
+    ],
+    "tables": {},
+    "columns": {}
+  }
+}

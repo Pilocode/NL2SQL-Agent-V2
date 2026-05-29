@@ -7,7 +7,8 @@ from pathlib import Path
 OPERATION_MODE_QUERY = "query"
 OPERATION_MODE_DML = "dml"
 OPERATION_MODE_DDL = "ddl"
-OPERATION_MODES = (OPERATION_MODE_QUERY, OPERATION_MODE_DML, OPERATION_MODE_DDL)
+OPERATION_MODE_AUTO = "auto"
+OPERATION_MODES = (OPERATION_MODE_QUERY, OPERATION_MODE_DML, OPERATION_MODE_DDL, OPERATION_MODE_AUTO)
 
 
 @dataclass(frozen=True)
@@ -196,3 +197,17 @@ class NL2SQLResponse:
     agent_traces: tuple[AgentTrace, ...] = ()
     stage_updates: tuple[StageUpdate, ...] = ()
     operation_mode: str = OPERATION_MODE_QUERY
+    sub_results: tuple[SubTaskResult, ...] = ()
+
+
+@dataclass(frozen=True)
+class SubTaskResult:
+    index: int
+    description: str
+    sql: str
+    succeeded: bool
+    message: str
+    columns: tuple[str, ...] = ()
+    rows: tuple[tuple[object, ...], ...] = ()
+    row_count: int = 0
+    statement_type: str = ""

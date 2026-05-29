@@ -1,32 +1,16 @@
 # NL2SQL Agent
 
-一个面向课程项目和本地演示的 NL2SQL 系统，提供 Streamlit 界面，支持自然语言查询、数据写入、数据库结构修改，以及多数据库切换。
+一个面向课程项目和本地演示的 NL2SQL 系统，提供 Streamlit 界面，支持自然语言查询、数据写入、数据库结构修改、多数据库切换，以及复合任务执行。
 
-## 你可以用它做什么
+## 核心功能
 
-- 把自然语言转换成 SQL，并直接执行。
-- 在 DML 模式下执行查询、插入、更新、删除。
-- 在 DDL 模式下生成创建表、加列、删表等语句，并在执行前进行二次确认。
-- 在页面里切换默认 Chinook 库和本地上传的 SQLite 库。
-- 自动展示当前库表结构摘要，并在成功执行非 SELECT SQL 后自动刷新。
-
-## 当前项目特性
-
-- Streamlit 聊天式界面。
-- Analysis / Thinking / Generation / Validation / Confirmation / Execution / Answer 分阶段流水线。
-- 对 unsupported 和 irrelevant 请求在 Analysis 阶段提前终止，不再伪装成 SQL 生成失败。
-- DDL 语句在展示最终 SQL 后需要用户二次确认，确认前不会修改数据库结构。
-- OpenAI 兼容接口接入，支持通过环境变量切换模型服务。
-- 本地数据库资产构建：metadata、semantic layer、examples。
-- 多数据库路由与本地示例库管理。
-- 已包含 Chinook 和多个本地 SQLite 演示库。
-
-## 当前流程说明
-
-- Query / DML 请求在 SQL 校验通过后会直接执行。
-- DDL 请求在 SQL 校验通过后先进入 Confirmation 阶段，用户确认后才会真正执行。
-- 删除整个数据库、账号权限管理、文件系统或命令执行这类请求会在 Analysis 阶段被标记为 unsupported。
-- 天气、闲聊、写作这类与数据库无关的问题会在 Analysis 阶段被标记为 irrelevant。
+- 自然语言 → SQL，自动识别意图，智能选择查询/插入/更新/删除/建表/改表
+- 复合任务：一句自然语言完成多步操作（如"建表→插入数据→查询"），自动分解并顺序执行
+- 图片 OCR：上传或粘贴截图，自动提取文字和表格信息并查询
+- 多数据库切换：Chinook 默认库 + 本地上传 + 新建空白库
+- 库表结构摘要 & 浏览表数据
+- 执行结果反馈：成功/失败带彩色状态徽章，失败时 LLM 生成中文解释
+- Gemini 风格暗色/浅色自适应 UI
 
 ## 快速开始
 
@@ -45,84 +29,79 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-### 3. 启动 Web UI
+### 3. 安装 Tesseract OCR（图片识别需要）
+
+下载安装 [Tesseract OCR](https://github.com/UB-Mannheim/tesseract/wiki)，勾选中文语言包。安装后重启终端。
+
+### 4. 启动
 
 ```powershell
 python -m streamlit run app/main.py
 ```
 
-启动后默认访问地址：
-
-- http://localhost:8501
+默认访问：http://localhost:8501
 
 ## 常用命令
 
-运行全部测试：
-
 ```powershell
+# 运行全部测试
 python -m pytest
-```
 
-仅运行关键流水线测试：
-
-```powershell
+# 运行流水线测试
 python -m pytest tests/test_sql_pipeline.py tests/test_operation_modes.py
-```
 
-重新生成 Chinook metadata：
-
-```powershell
+# 生成 Chinook metadata
 python scripts/generate_metadata.py
-```
 
-生成演示本地数据库：
-
-```powershell
+# 创建演示数据库
 python scripts/create_sample_dbs.py
 python scripts/create_library_demo_db.py
 ```
 
 ## 环境变量
 
-项目优先读取以下变量：
+| 变量 | 说明 |
+|---|---|
+| `NL2SQL_API_KEY` / `OPENAI_API_KEY` / `DASHSCOPE_API_KEY` | LLM API 密钥（优先级从高到低） |
+| `NL2SQL_BASE_URL` / `OPENAI_BASE_URL` | LLM 接口地址 |
+| `NL2SQL_MODEL` / `OPENAI_MODEL` | 默认模型 |
+| `NL2SQL_ANALYSIS_MODEL` | 分析阶段模型 |
+| `NL2SQL_THINKING_MODEL` | 语义思考阶段模型 |
+| `NL2SQL_GENERATION_MODEL` | SQL 生成阶段模型 |
+| `NL2SQL_ANSWER_MODEL` | 回答阶段模型 |
 
-- `NL2SQL_API_KEY` / `OPENAI_API_KEY` / `DASHSCOPE_API_KEY`
-- `NL2SQL_BASE_URL` / `OPENAI_BASE_URL`
-- `NL2SQL_MODEL` / `OPENAI_MODEL`
-- `NL2SQL_ANALYSIS_MODEL`
-- `NL2SQL_THINKING_MODEL`
-- `NL2SQL_GENERATION_MODEL`
-- `NL2SQL_REPAIR_MODEL`
-- `NL2SQL_ANSWER_MODEL`
+DashScope 用户只需设置 `DASHSCOPE_API_KEY`，base URL 和模型自动切换。
 
-如果当前环境里存在 `DASHSCOPE_API_KEY`，项目会默认走 DashScope 兼容接口，并优先使用配置里的默认模型。
+## 项目架构
 
-## 目录说明
+### 流水线
 
-- `app/`：Streamlit UI、配置和主编排逻辑。
-- `core/`：分析、生成、校验、执行、检索和数据库资产管理核心代码。
-- `data/`：原始数据库、处理后的 metadata/semantic layer、评测集和本地演示库。
-- `scripts/`：数据准备、资产构建和评测脚本。
-- `tests/`：单元测试和轻量回归测试。
-- `docs/`：系统架构图和答辩图材料。
+1. **Analysis** — 意图分类、关键词提取
+2. **Analysis gate** — unsupported/irrelevant 提前终止
+3. **Semantic thinking** — 解析模糊词（"热门"、"经典"）
+4. **SQL generation** — LLM 优先，回退到规则+示例
+5. **Validation** — sqlglot 解析 + 操作模式校验
+6. **DDL confirmation** — 修改表结构前二次确认（单任务）或计划确认（复合任务）
+7. **Execution** — SQLite 执行
+8. **Answer** — 结果自然语言解释，失败时 LLM 诊断原因
 
-## 推荐演示路径
+### 复合任务
 
-1. 打开页面后，先选择 `library_demo.sqlite`。
-2. 在 DML 模式中执行一条查询或更新。
-3. 切换到 DDL 模式，生成建表或加列 SQL，并点击确认执行。
-4. 打开“当前库表结构摘要”，确认结构已在执行后自动刷新。
-5. 再测试一条 unsupported 请求，例如“删除一整个数据库”，确认系统会直接给出不支持提示。
+LLM 判断请求是否需要多步骤，自动分解为子任务并顺序执行。支持混合 DDL + DML。任一子任务失败立即停止。执行后自动刷新表结构摘要。
 
-## 适用场景
+### 图片 OCR
 
-- 数据库课程大作业演示。
-- 本地 SQLite 数据库问答和操作原型。
-- Text-to-SQL / Agent 工作流实验。
+截图 → Tesseract 本地引擎识别文字/表格 → Markdown 格式输出 → 送入流水线。支持灰度增强、放大、对比度拉伸预处理。点击上传或拖拽到页面。
 
-## 说明
+### 智能模式
 
-- 当前仓库以 SQLite 为主。
-- 默认库为 Chinook。
-- 本地上传库和默认 SQLite 库在成功执行非 SELECT SQL 后，摘要会自动刷新。
-- 当前主流程已关闭自动 repair；生成失败或校验失败后会直接终止后续阶段。
+不再手动切换 DML/DDL。系统自动根据用户请求选择 SQL 类型（SELECT / INSERT / UPDATE / DELETE / CREATE / ALTER / DROP），DDL 操作执行前需确认。
+
+### 目录
+
+- `app/` — Streamlit UI、配置和编排
+- `core/` — 分析、生成、校验、执行、检索、OCR
+- `data/` — 原始数据库、metadata/semantic layer/examples
+- `scripts/` — 数据准备和资产构建
+- `tests/` — 单元测试
+- `docs/` — 架构图

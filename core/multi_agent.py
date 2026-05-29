@@ -7,7 +7,7 @@ import sqlglot
 from sqlglot import exp
 
 from core.llm_client import LLMProfile, OpenAICompatibleLLM
-from core.models import AgentTrace, ExampleCandidate, GenerationDiagnostics, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, QueryAnalysis, QueryExecution, RetrievalHit, RoutedDatabase, SQLDraft, SemanticInterpretation, TableProfile
+from core.models import AgentTrace, ExampleCandidate, GenerationDiagnostics, OPERATION_MODE_AUTO, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, QueryAnalysis, QueryExecution, RetrievalHit, RoutedDatabase, SQLDraft, SemanticInterpretation, TableProfile
 from core.prompt_builder import PromptBuilder
 from core.result_explainer import ResultExplainer
 from core.sql_generator import SQLGenerator
@@ -343,11 +343,12 @@ class SQLGenerationAgent:
         return None, AgentTrace("generation_agent", "failed", detail), prompt, diagnostics
 
     def _build_invalid_output_message(self, content: str, operation_mode: str) -> str:
-        mode_hint = "SELECT"
         if operation_mode == OPERATION_MODE_DML:
             mode_hint = "SELECT / INSERT / UPDATE / DELETE"
         elif operation_mode == OPERATION_MODE_DDL:
             mode_hint = "CREATE / ALTER / DROP"
+        else:
+            mode_hint = "SELECT / INSERT / UPDATE / DELETE / CREATE / ALTER / DROP"
         preview = " ".join(content.strip().split())[:180] or "<empty>"
         return f"LLM 已返回内容，但清洗后未提取到有效 SQL。当前模式要求输出以 {mode_hint} 开头的单条 SQL。原始返回预览: {preview}"
 
@@ -373,11 +374,12 @@ class SQLGenerationAgent:
 
     def _extract_first_valid_sql(self, segment: str, operation_mode: str) -> str:
         cleaned = segment.replace("```", " ").strip()
-        keyword_pattern = r"select\b"
         if operation_mode == OPERATION_MODE_DML:
             keyword_pattern = r"(?:select|insert|update|delete)\b"
         elif operation_mode == OPERATION_MODE_DDL:
             keyword_pattern = r"(?:create|alter|drop)\b"
+        else:
+            keyword_pattern = r"(?:select|insert|update|delete|create|alter|drop)\b"
 
         match = re.search(keyword_pattern, cleaned, flags=re.IGNORECASE)
         if match is None:
@@ -434,7 +436,8 @@ class SQLGenerationAgent:
             return isinstance(statement, (exp.Select, exp.Insert, exp.Update, exp.Delete)) or statement.find(exp.Select) is not None
         if operation_mode == OPERATION_MODE_DDL:
             return isinstance(statement, (exp.Create, exp.Alter, exp.Drop))
-        return False
+        # AUTO and anything else: allow all
+        return True
 
 class AnswerAgent:
     def __init__(self, llm: OpenAICompatibleLLM, prompt_builder: PromptBuilder, fallback_explainer: ResultExplainer, profile: LLMProfile):
@@ -444,18 +447,37 @@ class AnswerAgent:
         self.profile = profile
 
     def answer(self, question: str, sql: str, execution: QueryExecution, operation_mode: str = OPERATION_MODE_QUERY) -> tuple[str, AgentTrace]:
-        if execution.succeeded and self.llm.is_available():
-            prompt = self.prompt_builder.build_answer_prompt(question, sql, execution, operation_mode)
-            response = self.llm.chat(
-                system_prompt="You are a concise Chinese answer agent for analytics results.",
-                user_prompt=prompt,
-                model=self.profile.model,
-                temperature=self.profile.temperature,
-                max_tokens=self.profile.max_tokens,
-                enable_thinking=self.profile.enable_thinking,
-            )
-            if response is not None and response.content.strip():
-                return response.content.strip(), AgentTrace("answer_agent", "llm", "已使用快速回答 LLM 解释查询结果")
+        if self.llm.is_available():
+            if execution.succeeded:
+                prompt = self.prompt_builder.build_answer_prompt(question, sql, execution, operation_mode)
+                response = self.llm.chat(
+                    system_prompt="You are a concise Chinese answer agent for analytics results.",
+                    user_prompt=prompt,
+                    model=self.profile.model,
+                    temperature=self.profile.temperature,
+                    max_tokens=self.profile.max_tokens,
+                    enable_thinking=self.profile.enable_thinking,
+                )
+                if response is not None and response.content.strip():
+                    return response.content.strip(), AgentTrace("answer_agent", "llm", "已使用快速回答 LLM 解释查询结果")
+            else:
+                error_msg = execution.error_message or "未知错误"
+                error_prompt = (
+                    f"用户想执行以下操作：{question}\n"
+                    f"生成的 SQL：{sql}\n"
+                    f"执行失败，原始错误信息：{error_msg}\n\n"
+                    "请用一句通俗易懂的中文解释执行失败的原因，并给出修正建议。控制在 60 字以内。"
+                )
+                response = self.llm.chat(
+                    system_prompt="你是数据库助教，用简洁中文解释 SQL 执行失败原因并给出修正建议。",
+                    user_prompt=error_prompt,
+                    model=self.profile.model,
+                    temperature=0.2,
+                    max_tokens=200,
+                    enable_thinking=False,
+                )
+                if response is not None and response.content.strip():
+                    return response.content.strip(), AgentTrace("answer_agent", "llm_error", "LLM 已解释错误原因")
 
         return self.fallback_explainer.explain(question, execution, operation_mode), AgentTrace(
             "answer_agent",

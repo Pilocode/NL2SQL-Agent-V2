@@ -1,43 +1,166 @@
 {
   "table_aliases": {
-    "Artist": ["艺人", "歌手", "艺术家"],
-    "Album": ["专辑", "唱片"],
-    "Track": ["歌曲", "曲目", "音乐"],
-    "Customer": ["客户", "顾客", "用户"],
-    "Employee": ["员工", "客服", "支持代表", "销售代表", "客服代表"],
-    "Invoice": ["订单", "发票", "消费记录", "销售", "消费", "账单"],
-    "InvoiceLine": ["订单明细", "明细", "销售明细", "购买明细"],
-    "Playlist": ["播放列表", "歌单"],
-    "PlaylistTrack": ["歌单歌曲", "播放列表歌曲"],
-    "Genre": ["流派", "风格"],
-    "MediaType": ["媒体类型", "音频格式", "格式"]
+    "Artist": [
+      "艺人",
+      "歌手",
+      "艺术家"
+    ],
+    "Album": [
+      "专辑",
+      "唱片"
+    ],
+    "Track": [
+      "歌曲",
+      "曲目",
+      "音乐"
+    ],
+    "Customer": [
+      "客户",
+      "顾客",
+      "用户"
+    ],
+    "Employee": [
+      "员工",
+      "客服",
+      "支持代表",
+      "销售代表",
+      "客服代表"
+    ],
+    "Invoice": [
+      "订单",
+      "发票",
+      "消费记录",
+      "销售",
+      "消费",
+      "账单"
+    ],
+    "InvoiceLine": [
+      "订单明细",
+      "明细",
+      "销售明细",
+      "购买明细"
+    ],
+    "Playlist": [
+      "播放列表",
+      "歌单"
+    ],
+    "PlaylistTrack": [
+      "歌单歌曲",
+      "播放列表歌曲"
+    ],
+    "Genre": [
+      "流派",
+      "风格"
+    ],
+    "MediaType": [
+      "媒体类型",
+      "音频格式",
+      "格式"
+    ]
   },
   "column_aliases": {
-    "Artist.Name": ["艺人名", "歌手名"],
-    "Album.Title": ["专辑名", "专辑标题"],
-    "Track.Name": ["歌名", "歌曲名", "曲目名"],
-    "Track.UnitPrice": ["单价", "歌曲价格", "价格"],
-    "Track.Milliseconds": ["时长", "播放时长", "长度"],
-    "Customer.FirstName": ["名字"],
-    "Customer.LastName": ["姓氏"],
-    "Customer.Company": ["公司", "企业"],
-    "Customer.Country": ["国家"],
-    "Customer.City": ["城市"],
-    "Customer.SupportRepId": ["客服代表", "支持员工", "销售代表"],
-    "Employee.FirstName": ["员工名字"],
-    "Employee.LastName": ["员工姓氏"],
-    "Employee.Title": ["职位", "岗位"],
-    "Employee.HireDate": ["入职时间", "入职日期"],
-    "Invoice.InvoiceId": ["订单号", "发票号"],
-    "Invoice.InvoiceDate": ["下单时间", "日期", "订单日期"],
-    "Invoice.Total": ["总额", "销售额", "消费金额", "订单金额", "消费", "收入", "花费"],
-    "Invoice.BillingCountry": ["账单国家", "销售国家"],
-    "Invoice.BillingCity": ["账单城市", "销售城市"],
-    "InvoiceLine.Quantity": ["数量", "销量"],
-    "InvoiceLine.UnitPrice": ["明细单价"],
-    "Genre.Name": ["流派名"],
-    "MediaType.Name": ["媒体名", "格式名"],
-    "Playlist.Name": ["歌单名", "播放列表名"]
+    "Artist.Name": [
+      "艺人名",
+      "歌手名"
+    ],
+    "Album.Title": [
+      "专辑名",
+      "专辑标题"
+    ],
+    "Track.Name": [
+      "歌名",
+      "歌曲名",
+      "曲目名"
+    ],
+    "Track.UnitPrice": [
+      "单价",
+      "歌曲价格",
+      "价格"
+    ],
+    "Track.Milliseconds": [
+      "时长",
+      "播放时长",
+      "长度"
+    ],
+    "Customer.FirstName": [
+      "名字"
+    ],
+    "Customer.LastName": [
+      "姓氏"
+    ],
+    "Customer.Company": [
+      "公司",
+      "企业"
+    ],
+    "Customer.Country": [
+      "国家"
+    ],
+    "Customer.City": [
+      "城市"
+    ],
+    "Customer.SupportRepId": [
+      "客服代表",
+      "支持员工",
+      "销售代表"
+    ],
+    "Employee.FirstName": [
+      "员工名字"
+    ],
+    "Employee.LastName": [
+      "员工姓氏"
+    ],
+    "Employee.Title": [
+      "职位",
+      "岗位"
+    ],
+    "Employee.HireDate": [
+      "入职时间",
+      "入职日期"
+    ],
+    "Invoice.InvoiceId": [
+      "订单号",
+      "发票号"
+    ],
+    "Invoice.InvoiceDate": [
+      "下单时间",
+      "日期",
+      "订单日期"
+    ],
+    "Invoice.Total": [
+      "总额",
+      "销售额",
+      "消费金额",
+      "订单金额",
+      "消费",
+      "收入",
+      "花费"
+    ],
+    "Invoice.BillingCountry": [
+      "账单国家",
+      "销售国家"
+    ],
+    "Invoice.BillingCity": [
+      "账单城市",
+      "销售城市"
+    ],
+    "InvoiceLine.Quantity": [
+      "数量",
+      "销量"
+    ],
+    "InvoiceLine.UnitPrice": [
+      "明细单价"
+    ],
+    "Genre.Name": [
+      "流派名"
+    ],
+    "MediaType.Name": [
+      "媒体名",
+      "格式名"
+    ],
+    "Playlist.Name": [
+      "歌单名",
+      "播放列表名"
+    ]
   },
   "metric_templates": [
     {
@@ -88,5 +211,590 @@
       "column": "UnitPrice",
       "aggregation": "MAX"
     }
-  ]
+  ],
+  "database_summary": "SQLite 数据库 Chinook_Sqlite，主要包含 Album、Artist、Book 等业务数据。",
+  "table_descriptions": {
+    "Album": "记录 Album 相关数据，核心字段包括 AlbumId、Title、ArtistId。",
+    "Artist": "记录 Artist 相关数据，核心字段包括 ArtistId、Name。",
+    "Book": "记录 Book 相关数据，核心字段包括 Book_no、Book_name、Author。",
+    "Borrow": "记录 Borrow 相关数据，核心字段包括 Student_no、Book_no、Return_date。",
+    "Customer": "记录 Customer 相关数据，核心字段包括 CustomerId、FirstName、LastName。",
+    "Employee": "记录 Employee 相关数据，核心字段包括 EmployeeId、LastName、FirstName。",
+    "Genre": "记录 Genre 相关数据，核心字段包括 GenreId、Name。",
+    "Invoice": "记录 Invoice 相关数据，核心字段包括 InvoiceId、CustomerId、InvoiceDate。",
+    "InvoiceLine": "记录 InvoiceLine 相关数据，核心字段包括 InvoiceLineId、InvoiceId、TrackId。",
+    "MediaType": "记录 MediaType 相关数据，核心字段包括 MediaTypeId、Name。",
+    "Playlist": "记录 Playlist 相关数据，核心字段包括 PlaylistId、Name。",
+    "PlaylistTrack": "记录 PlaylistTrack 相关数据，核心字段包括 PlaylistId、TrackId。",
+    "Student": "记录 Student 相关数据，核心字段包括 Student_no、Student_name、Grade。",
+    "Track": "记录 Track 相关数据，核心字段包括 TrackId、Name、AlbumId。"
+  },
+  "column_descriptions": {
+    "Album.AlbumId": "记录 Album 中 AlbumId 的业务属性。",
+    "Album.Title": "表示 Album 的名称或标题信息。",
+    "Album.ArtistId": "记录 Album 中 ArtistId 的业务属性。",
+    "Artist.ArtistId": "记录 Artist 中 ArtistId 的业务属性。",
+    "Artist.Name": "表示 Artist 的名称或标题信息。",
+    "Book.Book_no": "记录 Book 中 Book_no 的业务属性。",
+    "Book.Book_name": "表示 Book 的名称或标题信息。",
+    "Book.Author": "记录 Book 中 Author 的业务属性。",
+    "Book.Price": "表示 Book 的金额或数值指标。",
+    "Borrow.Student_no": "记录 Borrow 中 Student_no 的业务属性。",
+    "Borrow.Book_no": "记录 Borrow 中 Book_no 的业务属性。",
+    "Borrow.Return_date": "表示 Borrow 的时间或周期信息。",
+    "Customer.CustomerId": "记录 Customer 中 CustomerId 的业务属性。",
+    "Customer.FirstName": "表示 Customer 的名称或标题信息。",
+    "Customer.LastName": "表示 Customer 的名称或标题信息。",
+    "Customer.Company": "记录 Customer 中 Company 的业务属性。",
+    "Customer.Address": "记录 Customer 中 Address 的业务属性。",
+    "Customer.City": "记录 Customer 中 City 的业务属性。",
+    "Customer.State": "记录 Customer 中 State 的业务属性。",
+    "Customer.Country": "记录 Customer 中 Country 的业务属性。",
+    "Customer.PostalCode": "记录 Customer 中 PostalCode 的业务属性。",
+    "Customer.Phone": "记录 Customer 中 Phone 的业务属性。",
+    "Customer.Fax": "记录 Customer 中 Fax 的业务属性。",
+    "Customer.Email": "记录 Customer 中 Email 的业务属性。",
+    "Customer.SupportRepId": "记录 Customer 中 SupportRepId 的业务属性。",
+    "Employee.EmployeeId": "记录 Employee 中 EmployeeId 的业务属性。",
+    "Employee.LastName": "表示 Employee 的名称或标题信息。",
+    "Employee.FirstName": "表示 Employee 的名称或标题信息。",
+    "Employee.Title": "表示 Employee 的名称或标题信息。",
+    "Employee.ReportsTo": "记录 Employee 中 ReportsTo 的业务属性。",
+    "Employee.BirthDate": "表示 Employee 的时间或周期信息。",
+    "Employee.HireDate": "表示 Employee 的时间或周期信息。",
+    "Employee.Address": "记录 Employee 中 Address 的业务属性。",
+    "Employee.City": "记录 Employee 中 City 的业务属性。",
+    "Employee.State": "记录 Employee 中 State 的业务属性。",
+    "Employee.Country": "记录 Employee 中 Country 的业务属性。",
+    "Employee.PostalCode": "记录 Employee 中 PostalCode 的业务属性。",
+    "Employee.Phone": "记录 Employee 中 Phone 的业务属性。",
+    "Employee.Fax": "记录 Employee 中 Fax 的业务属性。",
+    "Employee.Email": "记录 Employee 中 Email 的业务属性。",
+    "Genre.GenreId": "记录 Genre 中 GenreId 的业务属性。",
+    "Genre.Name": "表示 Genre 的名称或标题信息。",
+    "Invoice.InvoiceId": "记录 Invoice 中 InvoiceId 的业务属性。",
+    "Invoice.CustomerId": "记录 Invoice 中 CustomerId 的业务属性。",
+    "Invoice.InvoiceDate": "表示 Invoice 的时间或周期信息。",
+    "Invoice.BillingAddress": "记录 Invoice 中 BillingAddress 的业务属性。",
+    "Invoice.BillingCity": "记录 Invoice 中 BillingCity 的业务属性。",
+    "Invoice.BillingState": "记录 Invoice 中 BillingState 的业务属性。",
+    "Invoice.BillingCountry": "记录 Invoice 中 BillingCountry 的业务属性。",
+    "Invoice.BillingPostalCode": "记录 Invoice 中 BillingPostalCode 的业务属性。",
+    "Invoice.Total": "表示 Invoice 的金额或数值指标。",
+    "InvoiceLine.InvoiceLineId": "记录 InvoiceLine 中 InvoiceLineId 的业务属性。",
+    "InvoiceLine.InvoiceId": "记录 InvoiceLine 中 InvoiceId 的业务属性。",
+    "InvoiceLine.TrackId": "记录 InvoiceLine 中 TrackId 的业务属性。",
+    "InvoiceLine.UnitPrice": "表示 InvoiceLine 的金额或数值指标。",
+    "InvoiceLine.Quantity": "记录 InvoiceLine 中 Quantity 的业务属性。",
+    "MediaType.MediaTypeId": "记录 MediaType 中 MediaTypeId 的业务属性。",
+    "MediaType.Name": "表示 MediaType 的名称或标题信息。",
+    "Playlist.PlaylistId": "记录 Playlist 中 PlaylistId 的业务属性。",
+    "Playlist.Name": "表示 Playlist 的名称或标题信息。",
+    "PlaylistTrack.PlaylistId": "记录 PlaylistTrack 中 PlaylistId 的业务属性。",
+    "PlaylistTrack.TrackId": "记录 PlaylistTrack 中 TrackId 的业务属性。",
+    "Student.Student_no": "记录 Student 中 Student_no 的业务属性。",
+    "Student.Student_name": "表示 Student 的名称或标题信息。",
+    "Student.Grade": "记录 Student 中 Grade 的业务属性。",
+    "Track.TrackId": "记录 Track 中 TrackId 的业务属性。",
+    "Track.Name": "表示 Track 的名称或标题信息。",
+    "Track.AlbumId": "记录 Track 中 AlbumId 的业务属性。",
+    "Track.MediaTypeId": "记录 Track 中 MediaTypeId 的业务属性。",
+    "Track.GenreId": "记录 Track 中 GenreId 的业务属性。",
+    "Track.Composer": "记录 Track 中 Composer 的业务属性。",
+    "Track.Milliseconds": "记录 Track 中 Milliseconds 的业务属性。",
+    "Track.Bytes": "记录 Track 中 Bytes 的业务属性。",
+    "Track.UnitPrice": "表示 Track 的金额或数值指标。"
+  },
+  "summary_terms": {
+    "database": [
+      "sqlite",
+      "chinook_sqlite",
+      "主要包含",
+      "album",
+      "artist",
+      "book",
+      "等业务数据"
+    ],
+    "tables": {
+      "Album": [
+        "album",
+        "相关数据",
+        "核心字段包括",
+        "albumid",
+        "title",
+        "artistid"
+      ],
+      "Artist": [
+        "artist",
+        "相关数据",
+        "核心字段包括",
+        "artistid",
+        "name"
+      ],
+      "Book": [
+        "book",
+        "相关数据",
+        "核心字段包括",
+        "book_no",
+        "book_name",
+        "author"
+      ],
+      "Borrow": [
+        "borrow",
+        "相关数据",
+        "核心字段包括",
+        "student_no",
+        "book_no",
+        "return_date"
+      ],
+      "Customer": [
+        "customer",
+        "相关数据",
+        "核心字段包括",
+        "customerid",
+        "firstname",
+        "lastname"
+      ],
+      "Employee": [
+        "employee",
+        "相关数据",
+        "核心字段包括",
+        "employeeid",
+        "lastname",
+        "firstname"
+      ],
+      "Genre": [
+        "genre",
+        "相关数据",
+        "核心字段包括",
+        "genreid",
+        "name"
+      ],
+      "Invoice": [
+        "invoice",
+        "相关数据",
+        "核心字段包括",
+        "invoiceid",
+        "customerid",
+        "invoicedate"
+      ],
+      "InvoiceLine": [
+        "invoiceline",
+        "相关数据",
+        "核心字段包括",
+        "invoicelineid",
+        "invoiceid",
+        "trackid"
+      ],
+      "MediaType": [
+        "mediatype",
+        "相关数据",
+        "核心字段包括",
+        "mediatypeid",
+        "name"
+      ],
+      "Playlist": [
+        "playlist",
+        "相关数据",
+        "核心字段包括",
+        "playlistid",
+        "name"
+      ],
+      "PlaylistTrack": [
+        "playlisttrack",
+        "相关数据",
+        "核心字段包括",
+        "playlistid",
+        "trackid"
+      ],
+      "Student": [
+        "student",
+        "相关数据",
+        "核心字段包括",
+        "student_no",
+        "student_name",
+        "grade"
+      ],
+      "Track": [
+        "track",
+        "相关数据",
+        "核心字段包括",
+        "trackid",
+        "name",
+        "albumid"
+      ]
+    },
+    "columns": {
+      "Album.AlbumId": [
+        "album",
+        "albumid",
+        "的业务属性"
+      ],
+      "Album.Title": [
+        "表示",
+        "album",
+        "的名称或标题信息"
+      ],
+      "Album.ArtistId": [
+        "album",
+        "artistid",
+        "的业务属性"
+      ],
+      "Artist.ArtistId": [
+        "artist",
+        "artistid",
+        "的业务属性"
+      ],
+      "Artist.Name": [
+        "表示",
+        "artist",
+        "的名称或标题信息"
+      ],
+      "Book.Book_no": [
+        "book",
+        "book_no",
+        "的业务属性"
+      ],
+      "Book.Book_name": [
+        "表示",
+        "book",
+        "的名称或标题信息"
+      ],
+      "Book.Author": [
+        "book",
+        "author",
+        "的业务属性"
+      ],
+      "Book.Price": [
+        "表示",
+        "book",
+        "的金额或数值指标"
+      ],
+      "Borrow.Student_no": [
+        "borrow",
+        "student_no",
+        "的业务属性"
+      ],
+      "Borrow.Book_no": [
+        "borrow",
+        "book_no",
+        "的业务属性"
+      ],
+      "Borrow.Return_date": [
+        "表示",
+        "borrow",
+        "的时间或周期信息"
+      ],
+      "Customer.CustomerId": [
+        "customer",
+        "customerid",
+        "的业务属性"
+      ],
+      "Customer.FirstName": [
+        "表示",
+        "customer",
+        "的名称或标题信息"
+      ],
+      "Customer.LastName": [
+        "表示",
+        "customer",
+        "的名称或标题信息"
+      ],
+      "Customer.Company": [
+        "customer",
+        "company",
+        "的业务属性"
+      ],
+      "Customer.Address": [
+        "customer",
+        "address",
+        "的业务属性"
+      ],
+      "Customer.City": [
+        "customer",
+        "city",
+        "的业务属性"
+      ],
+      "Customer.State": [
+        "customer",
+        "state",
+        "的业务属性"
+      ],
+      "Customer.Country": [
+        "customer",
+        "country",
+        "的业务属性"
+      ],
+      "Customer.PostalCode": [
+        "customer",
+        "postalcode",
+        "的业务属性"
+      ],
+      "Customer.Phone": [
+        "customer",
+        "phone",
+        "的业务属性"
+      ],
+      "Customer.Fax": [
+        "customer",
+        "fax",
+        "的业务属性"
+      ],
+      "Customer.Email": [
+        "customer",
+        "email",
+        "的业务属性"
+      ],
+      "Customer.SupportRepId": [
+        "customer",
+        "supportrepid",
+        "的业务属性"
+      ],
+      "Employee.EmployeeId": [
+        "employee",
+        "employeeid",
+        "的业务属性"
+      ],
+      "Employee.LastName": [
+        "表示",
+        "employee",
+        "的名称或标题信息"
+      ],
+      "Employee.FirstName": [
+        "表示",
+        "employee",
+        "的名称或标题信息"
+      ],
+      "Employee.Title": [
+        "表示",
+        "employee",
+        "的名称或标题信息"
+      ],
+      "Employee.ReportsTo": [
+        "employee",
+        "reportsto",
+        "的业务属性"
+      ],
+      "Employee.BirthDate": [
+        "表示",
+        "employee",
+        "的时间或周期信息"
+      ],
+      "Employee.HireDate": [
+        "表示",
+        "employee",
+        "的时间或周期信息"
+      ],
+      "Employee.Address": [
+        "employee",
+        "address",
+        "的业务属性"
+      ],
+      "Employee.City": [
+        "employee",
+        "city",
+        "的业务属性"
+      ],
+      "Employee.State": [
+        "employee",
+        "state",
+        "的业务属性"
+      ],
+      "Employee.Country": [
+        "employee",
+        "country",
+        "的业务属性"
+      ],
+      "Employee.PostalCode": [
+        "employee",
+        "postalcode",
+        "的业务属性"
+      ],
+      "Employee.Phone": [
+        "employee",
+        "phone",
+        "的业务属性"
+      ],
+      "Employee.Fax": [
+        "employee",
+        "fax",
+        "的业务属性"
+      ],
+      "Employee.Email": [
+        "employee",
+        "email",
+        "的业务属性"
+      ],
+      "Genre.GenreId": [
+        "genre",
+        "genreid",
+        "的业务属性"
+      ],
+      "Genre.Name": [
+        "表示",
+        "genre",
+        "的名称或标题信息"
+      ],
+      "Invoice.InvoiceId": [
+        "invoice",
+        "invoiceid",
+        "的业务属性"
+      ],
+      "Invoice.CustomerId": [
+        "invoice",
+        "customerid",
+        "的业务属性"
+      ],
+      "Invoice.InvoiceDate": [
+        "表示",
+        "invoice",
+        "的时间或周期信息"
+      ],
+      "Invoice.BillingAddress": [
+        "invoice",
+        "billingaddress",
+        "的业务属性"
+      ],
+      "Invoice.BillingCity": [
+        "invoice",
+        "billingcity",
+        "的业务属性"
+      ],
+      "Invoice.BillingState": [
+        "invoice",
+        "billingstate",
+        "的业务属性"
+      ],
+      "Invoice.BillingCountry": [
+        "invoice",
+        "billingcountry",
+        "的业务属性"
+      ],
+      "Invoice.BillingPostalCode": [
+        "invoice",
+        "billingpostalcode",
+        "的业务属性"
+      ],
+      "Invoice.Total": [
+        "表示",
+        "invoice",
+        "的金额或数值指标"
+      ],
+      "InvoiceLine.InvoiceLineId": [
+        "invoiceline",
+        "invoicelineid",
+        "的业务属性"
+      ],
+      "InvoiceLine.InvoiceId": [
+        "invoiceline",
+        "invoiceid",
+        "的业务属性"
+      ],
+      "InvoiceLine.TrackId": [
+        "invoiceline",
+        "trackid",
+        "的业务属性"
+      ],
+      "InvoiceLine.UnitPrice": [
+        "表示",
+        "invoiceline",
+        "的金额或数值指标"
+      ],
+      "InvoiceLine.Quantity": [
+        "invoiceline",
+        "quantity",
+        "的业务属性"
+      ],
+      "MediaType.MediaTypeId": [
+        "mediatype",
+        "mediatypeid",
+        "的业务属性"
+      ],
+      "MediaType.Name": [
+        "表示",
+        "mediatype",
+        "的名称或标题信息"
+      ],
+      "Playlist.PlaylistId": [
+        "playlist",
+        "playlistid",
+        "的业务属性"
+      ],
+      "Playlist.Name": [
+        "表示",
+        "playlist",
+        "的名称或标题信息"
+      ],
+      "PlaylistTrack.PlaylistId": [
+        "playlisttrack",
+        "playlistid",
+        "的业务属性"
+      ],
+      "PlaylistTrack.TrackId": [
+        "playlisttrack",
+        "trackid",
+        "的业务属性"
+      ],
+      "Student.Student_no": [
+        "student",
+        "student_no",
+        "的业务属性"
+      ],
+      "Student.Student_name": [
+        "表示",
+        "student",
+        "的名称或标题信息"
+      ],
+      "Student.Grade": [
+        "student",
+        "grade",
+        "的业务属性"
+      ],
+      "Track.TrackId": [
+        "track",
+        "trackid",
+        "的业务属性"
+      ],
+      "Track.Name": [
+        "表示",
+        "track",
+        "的名称或标题信息"
+      ],
+      "Track.AlbumId": [
+        "track",
+        "albumid",
+        "的业务属性"
+      ],
+      "Track.MediaTypeId": [
+        "track",
+        "mediatypeid",
+        "的业务属性"
+      ],
+      "Track.GenreId": [
+        "track",
+        "genreid",
+        "的业务属性"
+      ],
+      "Track.Composer": [
+        "track",
+        "composer",
+        "的业务属性"
+      ],
+      "Track.Milliseconds": [
+        "track",
+        "milliseconds",
+        "的业务属性"
+      ],
+      "Track.Bytes": [
+        "track",
+        "bytes",
+        "的业务属性"
+      ],
+      "Track.UnitPrice": [
+        "表示",
+        "track",
+        "的金额或数值指标"
+      ]
+    }
+  }
 }

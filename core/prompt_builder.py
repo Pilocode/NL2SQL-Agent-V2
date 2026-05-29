@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from core.models import ExampleCandidate, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, QueryAnalysis, QueryExecution, RetrievalHit, RoutedDatabase, SemanticInterpretation, TableProfile
+from core.models import ExampleCandidate, OPERATION_MODE_AUTO, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, QueryAnalysis, QueryExecution, RetrievalHit, RoutedDatabase, SemanticInterpretation, TableProfile
 
 
 class PromptBuilder:
@@ -270,10 +270,12 @@ class PromptBuilder:
                 "- 优先使用 CREATE 或 ALTER；只有用户明确要求删除时才允许 DROP\n"
                 "- 修改已有表结构时不要破坏现有主键和外键"
             )
+        # default (AUTO / QUERY / anything else): allow all operations
         return (
             "- 只输出一条最终 SQL，不要解释，不要 Markdown 代码块\n"
-            "- 只允许 SELECT 查询\n"
-            "- 如需排序，尽量补上 LIMIT"
+            "- 根据用户需求智能选择 SELECT / INSERT / UPDATE / DELETE / CREATE / ALTER / DROP\n"
+            "- SELECT 查询如需排序尽量补上 LIMIT\n"
+            "- 修改已有表结构时不要破坏现有主键和外键"
         )
 
     def _build_operation_mode_hint(self, operation_mode: str) -> str:
@@ -281,4 +283,5 @@ class PromptBuilder:
             return "DML 数据操作模式（SELECT / INSERT / UPDATE / DELETE）"
         if operation_mode == OPERATION_MODE_DDL:
             return "DDL 结构管理模式（CREATE / ALTER / DROP）"
-        return "只读查询模式（SELECT）"
+        # default (AUTO / QUERY / anything else): allow all operations
+        return "智能模式：根据用户需求自动选择 SELECT / INSERT / UPDATE / DELETE / CREATE / ALTER / DROP"

@@ -1,0 +1,13 @@
+{
+  "database_name": "test_db",
+  "dialect": "sqlite",
+  "description": "SQLite 数据库 test_db。",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/test_db.sqlite"
+  },
+  "domain_tags": [
+    "test_db"
+  ],
+  "tables": []
+}

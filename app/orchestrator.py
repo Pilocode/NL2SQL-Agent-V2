@@ -8,7 +8,7 @@ from core.database_registry import load_database_registry
 from core.database_router import DatabaseRouter
 from core.example_retriever import ExampleRetriever
 from core.llm_client import LLMProfile, OpenAICompatibleLLM
-from core.models import AgentTrace, ExampleCandidate, ExecutionConfirmation, NL2SQLResponse, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, PipelineResult, QueryExecution, SemanticInterpretation, StageUpdate, ValidationResult
+from core.models import AgentTrace, ExampleCandidate, ExecutionConfirmation, NL2SQLResponse, OPERATION_MODE_AUTO, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, PipelineResult, QueryExecution, SemanticInterpretation, StageUpdate, SubTaskResult, ValidationResult
 from core.multi_agent import AnswerAgent, QueryAnalysisAgent, SQLGenerationAgent, SemanticThinkingAgent
 from core.prompt_builder import PromptBuilder
 from core.query_analyzer import QueryAnalyzer
@@ -44,7 +44,7 @@ class NL2SQLOrchestrator:
             LLMProfile(
                 model=self.settings.llm_thinking_model,
                 temperature=0.2,
-                max_tokens=320,
+                max_tokens=10240,
                 enable_thinking=self.settings.llm_enable_thinking,
             ),
         )
@@ -55,7 +55,7 @@ class NL2SQLOrchestrator:
             LLMProfile(
                 model=self.settings.llm_answer_model,
                 temperature=0.2,
-                max_tokens=220,
+                max_tokens=10240,
                 enable_thinking=False,
             ),
         )
@@ -82,7 +82,7 @@ class NL2SQLOrchestrator:
                 LLMProfile(
                     model=self.settings.llm_analysis_model,
                     temperature=0.1,
-                    max_tokens=420,
+                    max_tokens=10240,
                     enable_thinking=self.settings.llm_enable_thinking,
                 ),
             )
@@ -93,7 +93,7 @@ class NL2SQLOrchestrator:
                 LLMProfile(
                     model=self.settings.llm_generation_model,
                     temperature=0.0,
-                    max_tokens=520,
+                    max_tokens=10240,
                     enable_thinking=False,
                 ),
             )
@@ -489,6 +489,8 @@ class NL2SQLOrchestrator:
         yield "final", response
 
     def _requires_ddl_confirmation(self, operation_mode: str, statement_type: str | None) -> bool:
+        if operation_mode == OPERATION_MODE_AUTO:
+            return False
         return operation_mode == OPERATION_MODE_DDL and statement_type in {"create", "alter", "drop"}
 
     def _execute_sql(
@@ -550,3 +552,99 @@ class NL2SQLOrchestrator:
         if execution.statement_type in {"create", "alter", "drop"}:
             return self._build_stage_message("execution", "SQL 执行完成，数据库结构已更新。")
         return self._build_stage_message("execution", "SQL 执行完成。")
+
+    # ── compound task ──
+
+    def plan_compound(self, question: str) -> list[str] | None:
+        if not self.llm_client.is_available():
+            return None
+        resp = self.llm_client.chat(
+            system_prompt=(
+                "你是任务规划器。SQLite 一次只能执行一条 SQL，所以「创建三张表」必须拆成三步。\n"
+                "输出格式（严格遵守）：\n"
+                "如果是简单任务，只输出 SINGLE\n"
+                "如果是复合任务，只输出：\n"
+                "MULTI\n"
+                "1. 第一条子任务描述\n"
+                "2. 第二条子任务描述\n"
+                "不要输出任何其他文字、解释或 Markdown。"
+            ),
+            user_prompt=f"请求：{question}",
+            temperature=0.1,
+            max_tokens=10240,
+            enable_thinking=False,
+        )
+        if resp is None:
+            return None
+        text = resp.content.strip()
+        # lenient: look for numbered items anywhere in the response
+        import re
+        tasks: list[str] = []
+        for ln in text.splitlines():
+            ln = ln.strip()
+            m = re.match(r"^(?:\d+[\.\)、]\s*|[-•]\s+)", ln)
+            if m:
+                task = ln[m.end():].strip()
+                if task:
+                    tasks.append(task)
+        return tasks if len(tasks) >= 2 else None
+
+    @staticmethod
+    def _detect_subtask_mode(description: str, fallback: str) -> str:
+        upper = description.upper()
+        ddl_keywords = (
+            "CREATE", "ALTER", "DROP", "建表", "删表", "加列", "添加字段",
+            "修改表", "增加字段", "删除字段", "新增", "修改字段",
+        )
+        if any(kw in upper for kw in ddl_keywords):
+            return OPERATION_MODE_DDL
+        return fallback
+
+    def execute_subtask(self, description: str, operation_mode: str) -> NL2SQLResponse:
+        final: NL2SQLResponse | None = None
+        for etype, payload in self.answer_question_stream(description, operation_mode=operation_mode):
+            if etype == "final":
+                final = payload
+        if final is None:
+            raise RuntimeError(f"子任务未产出结果: {description}")
+        # auto-confirm DDL in compound mode
+        if self._requires_ddl_confirmation(operation_mode, final.validation.statement_type):
+            if final.execution_confirmation is not None and final.execution_confirmation.required:
+                final = self.confirm_ddl_response(final)
+        return final
+
+    def execute_compound_stream(self, question: str, plan: list[str], operation_mode: str):
+        yield "plan", plan
+        results: list[SubTaskResult] = []
+        overall_failed = False
+        for i, desc in enumerate(plan):
+            yield "step_start", (i + 1, len(plan), desc)
+            try:
+                resp = self.execute_subtask(desc, operation_mode)
+                exec_data = resp.execution
+                sr = SubTaskResult(
+                    index=i + 1,
+                    description=desc,
+                    sql=resp.final_sql or "",
+                    succeeded=exec_data.succeeded if exec_data else False,
+                    message=resp.answer_text or (exec_data.error_message if exec_data else ""),
+                    columns=exec_data.columns if exec_data else (),
+                    rows=exec_data.rows if exec_data else (),
+                    row_count=exec_data.row_count if exec_data else 0,
+                    statement_type=exec_data.statement_type if exec_data else "",
+                )
+                results.append(sr)
+                yield "step_done", sr
+                if not sr.succeeded:
+                    overall_failed = True
+                    break
+            except Exception as exc:
+                sr = SubTaskResult(
+                    index=i + 1, description=desc, sql="",
+                    succeeded=False, message=str(exc),
+                )
+                results.append(sr)
+                yield "step_done", sr
+                overall_failed = True
+                break
+        yield "done", tuple(results)

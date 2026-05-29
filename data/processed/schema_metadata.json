@@ -26,19 +26,23 @@
         {
           "name": "AlbumId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Album 中 AlbumId 的业务属性。"
         },
         {
           "name": "Title",
           "type": "NVARCHAR(160)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Album 的名称或标题信息。"
         },
         {
           "name": "ArtistId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Album 中 ArtistId 的业务属性。"
         }
-      ]
+      ],
+      "description": "记录 Album 相关数据，核心字段包括 AlbumId、Title、ArtistId。"
     },
     {
       "name": "Artist",
@@ -51,14 +55,97 @@
         {
           "name": "ArtistId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Artist 中 ArtistId 的业务属性。"
         },
         {
           "name": "Name",
           "type": "NVARCHAR(120)",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 Artist 的名称或标题信息。"
         }
-      ]
+      ],
+      "description": "记录 Artist 相关数据，核心字段包括 ArtistId、Name。"
+    },
+    {
+      "name": "Book",
+      "row_count": 6,
+      "primary_keys": [
+        "Book_no"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Book_no",
+          "type": "TEXT(20)",
+          "nullable": true,
+          "description": "记录 Book 中 Book_no 的业务属性。"
+        },
+        {
+          "name": "Book_name",
+          "type": "TEXT(100)",
+          "nullable": false,
+          "description": "表示 Book 的名称或标题信息。"
+        },
+        {
+          "name": "Author",
+          "type": "TEXT(100)",
+          "nullable": true,
+          "description": "记录 Book 中 Author 的业务属性。"
+        },
+        {
+          "name": "Price",
+          "type": "REAL(10, 2)",
+          "nullable": true,
+          "description": "表示 Book 的金额或数值指标。"
+        }
+      ],
+      "description": "记录 Book 相关数据，核心字段包括 Book_no、Book_name、Author。"
+    },
+    {
+      "name": "Borrow",
+      "row_count": 0,
+      "primary_keys": [
+        "Student_no",
+        "Book_no"
+      ],
+      "foreign_keys": [
+        {
+          "column": "Book_no",
+          "references": {
+            "table": "Book",
+            "column": "Book_no"
+          }
+        },
+        {
+          "column": "Student_no",
+          "references": {
+            "table": "Student",
+            "column": "Student_no"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "Student_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Borrow 中 Student_no 的业务属性。"
+        },
+        {
+          "name": "Book_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Borrow 中 Book_no 的业务属性。"
+        },
+        {
+          "name": "Return_date",
+          "type": "DATETIME",
+          "nullable": true,
+          "description": "表示 Borrow 的时间或周期信息。"
+        }
+      ],
+      "description": "记录 Borrow 相关数据，核心字段包括 Student_no、Book_no、Return_date。"
     },
     {
       "name": "Customer",
@@ -79,69 +166,83 @@
         {
           "name": "CustomerId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Customer 中 CustomerId 的业务属性。"
         },
         {
           "name": "FirstName",
           "type": "NVARCHAR(40)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Customer 的名称或标题信息。"
         },
         {
           "name": "LastName",
           "type": "NVARCHAR(20)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Customer 的名称或标题信息。"
         },
         {
           "name": "Company",
           "type": "NVARCHAR(80)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 Company 的业务属性。"
         },
         {
           "name": "Address",
           "type": "NVARCHAR(70)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 Address 的业务属性。"
         },
         {
           "name": "City",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 City 的业务属性。"
         },
         {
           "name": "State",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 State 的业务属性。"
         },
         {
           "name": "Country",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 Country 的业务属性。"
         },
         {
           "name": "PostalCode",
           "type": "NVARCHAR(10)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 PostalCode 的业务属性。"
         },
         {
           "name": "Phone",
           "type": "NVARCHAR(24)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 Phone 的业务属性。"
         },
         {
           "name": "Fax",
           "type": "NVARCHAR(24)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 Fax 的业务属性。"
         },
         {
           "name": "Email",
           "type": "NVARCHAR(60)",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Customer 中 Email 的业务属性。"
         },
         {
           "name": "SupportRepId",
           "type": "INTEGER",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Customer 中 SupportRepId 的业务属性。"
         }
-      ]
+      ],
+      "description": "记录 Customer 相关数据，核心字段包括 CustomerId、FirstName、LastName。"
     },
     {
       "name": "Employee",
@@ -162,79 +263,95 @@
         {
           "name": "EmployeeId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Employee 中 EmployeeId 的业务属性。"
         },
         {
           "name": "LastName",
           "type": "NVARCHAR(20)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Employee 的名称或标题信息。"
         },
         {
           "name": "FirstName",
           "type": "NVARCHAR(20)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Employee 的名称或标题信息。"
         },
         {
           "name": "Title",
           "type": "NVARCHAR(30)",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 Employee 的名称或标题信息。"
         },
         {
           "name": "ReportsTo",
           "type": "INTEGER",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 ReportsTo 的业务属性。"
         },
         {
           "name": "BirthDate",
           "type": "DATETIME",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 Employee 的时间或周期信息。"
         },
         {
           "name": "HireDate",
           "type": "DATETIME",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 Employee 的时间或周期信息。"
         },
         {
           "name": "Address",
           "type": "NVARCHAR(70)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 Address 的业务属性。"
         },
         {
           "name": "City",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 City 的业务属性。"
         },
         {
           "name": "State",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 State 的业务属性。"
         },
         {
           "name": "Country",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 Country 的业务属性。"
         },
         {
           "name": "PostalCode",
           "type": "NVARCHAR(10)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 PostalCode 的业务属性。"
         },
         {
           "name": "Phone",
           "type": "NVARCHAR(24)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 Phone 的业务属性。"
         },
         {
           "name": "Fax",
           "type": "NVARCHAR(24)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 Fax 的业务属性。"
         },
         {
           "name": "Email",
           "type": "NVARCHAR(60)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Employee 中 Email 的业务属性。"
         }
-      ]
+      ],
+      "description": "记录 Employee 相关数据，核心字段包括 EmployeeId、LastName、FirstName。"
     },
     {
       "name": "Genre",
@@ -247,14 +364,17 @@
         {
           "name": "GenreId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Genre 中 GenreId 的业务属性。"
         },
         {
           "name": "Name",
           "type": "NVARCHAR(120)",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 Genre 的名称或标题信息。"
         }
-      ]
+      ],
+      "description": "记录 Genre 相关数据，核心字段包括 GenreId、Name。"
     },
     {
       "name": "Invoice",
@@ -275,49 +395,59 @@
         {
           "name": "InvoiceId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Invoice 中 InvoiceId 的业务属性。"
         },
         {
           "name": "CustomerId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Invoice 中 CustomerId 的业务属性。"
         },
         {
           "name": "InvoiceDate",
           "type": "DATETIME",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Invoice 的时间或周期信息。"
         },
         {
           "name": "BillingAddress",
           "type": "NVARCHAR(70)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Invoice 中 BillingAddress 的业务属性。"
         },
         {
           "name": "BillingCity",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Invoice 中 BillingCity 的业务属性。"
         },
         {
           "name": "BillingState",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Invoice 中 BillingState 的业务属性。"
         },
         {
           "name": "BillingCountry",
           "type": "NVARCHAR(40)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Invoice 中 BillingCountry 的业务属性。"
         },
         {
           "name": "BillingPostalCode",
           "type": "NVARCHAR(10)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Invoice 中 BillingPostalCode 的业务属性。"
         },
         {
           "name": "Total",
           "type": "NUMERIC(10,2)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Invoice 的金额或数值指标。"
         }
-      ]
+      ],
+      "description": "记录 Invoice 相关数据，核心字段包括 InvoiceId、CustomerId、InvoiceDate。"
     },
     {
       "name": "InvoiceLine",
@@ -345,29 +475,35 @@
         {
           "name": "InvoiceLineId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 InvoiceLine 中 InvoiceLineId 的业务属性。"
         },
         {
           "name": "InvoiceId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 InvoiceLine 中 InvoiceId 的业务属性。"
         },
         {
           "name": "TrackId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 InvoiceLine 中 TrackId 的业务属性。"
         },
         {
           "name": "UnitPrice",
           "type": "NUMERIC(10,2)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 InvoiceLine 的金额或数值指标。"
         },
         {
           "name": "Quantity",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 InvoiceLine 中 Quantity 的业务属性。"
         }
-      ]
+      ],
+      "description": "记录 InvoiceLine 相关数据，核心字段包括 InvoiceLineId、InvoiceId、TrackId。"
     },
     {
       "name": "MediaType",
@@ -380,14 +516,17 @@
         {
           "name": "MediaTypeId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 MediaType 中 MediaTypeId 的业务属性。"
         },
         {
           "name": "Name",
           "type": "NVARCHAR(120)",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 MediaType 的名称或标题信息。"
         }
-      ]
+      ],
+      "description": "记录 MediaType 相关数据，核心字段包括 MediaTypeId、Name。"
     },
     {
       "name": "Playlist",
@@ -400,14 +539,17 @@
         {
           "name": "PlaylistId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Playlist 中 PlaylistId 的业务属性。"
         },
         {
           "name": "Name",
           "type": "NVARCHAR(120)",
-          "nullable": true
+          "nullable": true,
+          "description": "表示 Playlist 的名称或标题信息。"
         }
-      ]
+      ],
+      "description": "记录 Playlist 相关数据，核心字段包括 PlaylistId、Name。"
     },
     {
       "name": "PlaylistTrack",
@@ -436,14 +578,44 @@
         {
           "name": "PlaylistId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 PlaylistTrack 中 PlaylistId 的业务属性。"
         },
         {
           "name": "TrackId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 PlaylistTrack 中 TrackId 的业务属性。"
         }
-      ]
+      ],
+      "description": "记录 PlaylistTrack 相关数据，核心字段包括 PlaylistId、TrackId。"
+    },
+    {
+      "name": "Student",
+      "row_count": 5,
+      "primary_keys": [],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Student_no",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "记录 Student 中 Student_no 的业务属性。"
+        },
+        {
+          "name": "Student_name",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "表示 Student 的名称或标题信息。"
+        },
+        {
+          "name": "Grade",
+          "type": "TEXT",
+          "nullable": true,
+          "description": "记录 Student 中 Grade 的业务属性。"
+        }
+      ],
+      "description": "记录 Student 相关数据，核心字段包括 Student_no、Student_name、Grade。"
     },
     {
       "name": "Track",
@@ -478,49 +650,60 @@
         {
           "name": "TrackId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Track 中 TrackId 的业务属性。"
         },
         {
           "name": "Name",
           "type": "NVARCHAR(200)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Track 的名称或标题信息。"
         },
         {
           "name": "AlbumId",
           "type": "INTEGER",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Track 中 AlbumId 的业务属性。"
         },
         {
           "name": "MediaTypeId",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Track 中 MediaTypeId 的业务属性。"
         },
         {
           "name": "GenreId",
           "type": "INTEGER",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Track 中 GenreId 的业务属性。"
         },
         {
           "name": "Composer",
           "type": "NVARCHAR(220)",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Track 中 Composer 的业务属性。"
         },
         {
           "name": "Milliseconds",
           "type": "INTEGER",
-          "nullable": false
+          "nullable": false,
+          "description": "记录 Track 中 Milliseconds 的业务属性。"
         },
         {
           "name": "Bytes",
           "type": "INTEGER",
-          "nullable": true
+          "nullable": true,
+          "description": "记录 Track 中 Bytes 的业务属性。"
         },
         {
           "name": "UnitPrice",
           "type": "NUMERIC(10,2)",
-          "nullable": false
+          "nullable": false,
+          "description": "表示 Track 的金额或数值指标。"
         }
-      ]
+      ],
+      "description": "记录 Track 相关数据，核心字段包括 TrackId、Name、AlbumId。"
     }
-  ]
+  ],
+  "description": "SQLite 数据库 Chinook_Sqlite，主要包含 Album、Artist、Book 等业务数据。"
 }

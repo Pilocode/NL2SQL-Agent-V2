@@ -1,7 +1,7 @@
 {
   "database_name": "sales",
   "dialect": "sqlite",
-  "description": "记录销售业务相关数据，包含客户与订单信息。",
+  "description": "销售业务数据库，管理客户与订单核心数据。",
   "source": {
     "name": "local-upload",
     "database_file": "data/local_dbs/sales.sqlite"
@@ -22,22 +22,22 @@
           "name": "id",
           "type": "INTEGER",
           "nullable": true,
-          "description": "客户唯一标识符，用于关联其他表记录。"
+          "description": "唯一标识客户记录的主键。"
         },
         {
           "name": "name",
           "type": "TEXT",
           "nullable": true,
-          "description": "客户名称或标题，用于识别具体客户实体。"
+          "description": "客户的名称或标题信息。"
         },
         {
           "name": "country",
           "type": "TEXT",
           "nullable": true,
-          "description": "客户所属国家，反映市场区域分布情况。"
+          "description": "记录客户所属国家的属性。"
         }
       ],
-      "description": "存储客户基本信息，含唯一标识、名称及国家属性。"
+      "description": "记录客户信息，主键ID，包含名称和国家。"
     },
     {
       "name": "orders",
@@ -51,28 +51,28 @@
           "name": "id",
           "type": "INTEGER",
           "nullable": true,
-          "description": "订单唯一标识符，关联客户与交易记录。"
+          "description": "唯一标识订单记录的主键。"
         },
         {
           "name": "customer_id",
           "type": "INTEGER",
           "nullable": true,
-          "description": "关联客户ID，指向customers表中的客户记录。"
+          "description": "关联客户表的外键字段。"
         },
         {
           "name": "amount",
           "type": "REAL",
           "nullable": true,
-          "description": "订单交易金额，记录实际成交数值。"
+          "description": "表示订单的金额数值指标。"
         },
         {
           "name": "year",
           "type": "INTEGER",
           "nullable": true,
-          "description": "订单年份，标识交易发生的时间周期。"
+          "description": "记录订单发生的年份信息。"
         }
       ],
-      "description": "记录订单交易详情，含关联客户、金额及年份信息。"
+      "description": "存储订单记录，包含客户ID、金额和年份。"
     }
   ]
 }

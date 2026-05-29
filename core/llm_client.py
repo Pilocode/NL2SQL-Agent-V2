@@ -105,12 +105,66 @@ class OpenAICompatibleLLM:
         if not choices:
             return LLMCallResult(response=None, failure_type="empty_choices", failure_message="LLM 返回为空 choices。")
         message = getattr(choices[0], "message", None)
+
+        finish = getattr(choices[0], "finish_reason", None) or "unknown"
+
         content = self._normalize_message_content(getattr(message, "content", None))
         if not content:
-            return LLMCallResult(response=None, failure_type="empty_content", failure_message="LLM 已返回响应，但 message.content 为空。")
+            # DeepSeek reasoner / thinking models may put output in reasoning_content
+            reasoning = getattr(message, "reasoning_content", None)
+            content = self._normalize_message_content(reasoning)
+        if not content:
+            return LLMCallResult(
+                response=None,
+                failure_type="empty_content",
+                failure_message=f"LLM 返回响应但 content 为空（finish_reason={finish}）。模型可能在思考阶段未产出最终答案，可尝试调大 max_tokens 或重试。",
+            )
 
         response_model = getattr(response, "model", None) or request_model
         return LLMCallResult(response=LLMResponse(content=content, model=str(response_model)))
+
+    def chat_with_image(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        image_base64: str,
+        image_type: str = "image/png",
+        temperature: float = 0.1,
+        max_tokens: int = 1600,
+        model: str | None = None,
+    ) -> str | None:
+        if not self.is_available() or self.client is None:
+            return None
+
+        request_model = (model or self.model).strip()
+        data_url = f"data:{image_type};base64,{image_base64}"
+
+        try:
+            response = self.client.chat.completions.create(
+                model=request_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": [
+                        {"type": "text", "text": user_prompt},
+                        {"type": "image_url", "image_url": {"url": data_url}},
+                    ]},
+                ],
+                temperature=temperature,
+                max_tokens=max_tokens,
+                extra_body={"enable_thinking": False} if "dashscope.aliyuncs.com" in self.base_url else None,
+            )
+        except Exception:
+            return None
+
+        choices = getattr(response, "choices", None) or []
+        if not choices:
+            return None
+        message = getattr(choices[0], "message", None)
+        content = self._normalize_message_content(getattr(message, "content", None))
+        if not content:
+            reasoning = getattr(message, "reasoning_content", None)
+            content = self._normalize_message_content(reasoning)
+        return content or None
 
     def _normalize_message_content(self, content: object) -> str:
         if isinstance(content, str):

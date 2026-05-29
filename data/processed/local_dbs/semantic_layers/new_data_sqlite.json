@@ -1,0 +1,105 @@
+{
+  "table_aliases": {},
+  "column_aliases": {},
+  "database_summary": "一个用于存储和管理新数据相关业务信息的数据库",
+  "table_descriptions": {
+    "Book": "记录 Book 相关数据，核心字段包括 Book_no、Book_name、Author。",
+    "Borrow": "记录 Borrow 相关数据，核心字段包括 Student_no、Book_no、Return_date。",
+    "Student": "记录 Student 相关数据，核心字段包括 Student_no、Student_name、Grade。"
+  },
+  "column_descriptions": {
+    "Book.Book_no": "记录 Book 中 Book_no 的业务属性。",
+    "Book.Book_name": "表示 Book 的名称或标题信息。",
+    "Book.Author": "记录 Book 中 Author 的业务属性。",
+    "Book.Price": "表示 Book 的金额或数值指标。",
+    "Borrow.Student_no": "记录 Borrow 中 Student_no 的业务属性。",
+    "Borrow.Book_no": "记录 Borrow 中 Book_no 的业务属性。",
+    "Borrow.Return_date": "表示 Borrow 的时间或周期信息。",
+    "Student.Student_no": "记录 Student 中 Student_no 的业务属性。",
+    "Student.Student_name": "表示 Student 的名称或标题信息。",
+    "Student.Grade": "记录 Student 中 Grade 的业务属性。"
+  },
+  "summary_terms": {
+    "database": [
+      "一个用于存储和管理新数据相关业务信息的数据库"
+    ],
+    "tables": {
+      "Book": [
+        "book",
+        "相关数据",
+        "核心字段包括",
+        "book_no",
+        "book_name",
+        "author"
+      ],
+      "Borrow": [
+        "borrow",
+        "相关数据",
+        "核心字段包括",
+        "student_no",
+        "book_no",
+        "return_date"
+      ],
+      "Student": [
+        "student",
+        "相关数据",
+        "核心字段包括",
+        "student_no",
+        "student_name",
+        "grade"
+      ]
+    },
+    "columns": {
+      "Book.Book_no": [
+        "book",
+        "book_no",
+        "的业务属性"
+      ],
+      "Book.Book_name": [
+        "表示",
+        "book",
+        "的名称或标题信息"
+      ],
+      "Book.Author": [
+        "book",
+        "author",
+        "的业务属性"
+      ],
+      "Book.Price": [
+        "表示",
+        "book",
+        "的金额或数值指标"
+      ],
+      "Borrow.Student_no": [
+        "borrow",
+        "student_no",
+        "的业务属性"
+      ],
+      "Borrow.Book_no": [
+        "borrow",
+        "book_no",
+        "的业务属性"
+      ],
+      "Borrow.Return_date": [
+        "表示",
+        "borrow",
+        "的时间或周期信息"
+      ],
+      "Student.Student_no": [
+        "student",
+        "student_no",
+        "的业务属性"
+      ],
+      "Student.Student_name": [
+        "表示",
+        "student",
+        "的名称或标题信息"
+      ],
+      "Student.Grade": [
+        "student",
+        "grade",
+        "的业务属性"
+      ]
+    }
+  }
+}

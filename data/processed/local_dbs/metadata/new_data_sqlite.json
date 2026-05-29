@@ -1,0 +1,123 @@
+{
+  "database_name": "new_data",
+  "dialect": "sqlite",
+  "description": "一个用于存储和管理新数据相关业务信息的数据库",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/new_data.sqlite"
+  },
+  "domain_tags": [
+    "new_data"
+  ],
+  "tables": [
+    {
+      "name": "Book",
+      "row_count": 6,
+      "primary_keys": [
+        "Book_no"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Book_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Book 中 Book_no 的业务属性。"
+        },
+        {
+          "name": "Book_name",
+          "type": "TEXT(30)",
+          "nullable": true,
+          "description": "表示 Book 的名称或标题信息。"
+        },
+        {
+          "name": "Author",
+          "type": "TEXT(30)",
+          "nullable": true,
+          "description": "记录 Book 中 Author 的业务属性。"
+        },
+        {
+          "name": "Price",
+          "type": "REAL",
+          "nullable": true,
+          "description": "表示 Book 的金额或数值指标。"
+        }
+      ],
+      "description": "记录 Book 相关数据，核心字段包括 Book_no、Book_name、Author。"
+    },
+    {
+      "name": "Borrow",
+      "row_count": 7,
+      "primary_keys": [
+        "Student_no",
+        "Book_no"
+      ],
+      "foreign_keys": [
+        {
+          "column": "Book_no",
+          "references": {
+            "table": "Book",
+            "column": "Book_no"
+          }
+        },
+        {
+          "column": "Student_no",
+          "references": {
+            "table": "Student",
+            "column": "Student_no"
+          }
+        }
+      ],
+      "columns": [
+        {
+          "name": "Student_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Borrow 中 Student_no 的业务属性。"
+        },
+        {
+          "name": "Book_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Borrow 中 Book_no 的业务属性。"
+        },
+        {
+          "name": "Return_date",
+          "type": "DATETIME",
+          "nullable": true,
+          "description": "表示 Borrow 的时间或周期信息。"
+        }
+      ],
+      "description": "记录 Borrow 相关数据，核心字段包括 Student_no、Book_no、Return_date。"
+    },
+    {
+      "name": "Student",
+      "row_count": 5,
+      "primary_keys": [
+        "Student_no"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Student_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Student 中 Student_no 的业务属性。"
+        },
+        {
+          "name": "Student_name",
+          "type": "TEXT(30)",
+          "nullable": true,
+          "description": "表示 Student 的名称或标题信息。"
+        },
+        {
+          "name": "Grade",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Student 中 Grade 的业务属性。"
+        }
+      ],
+      "description": "记录 Student 相关数据，核心字段包括 Student_no、Student_name、Grade。"
+    }
+  ]
+}

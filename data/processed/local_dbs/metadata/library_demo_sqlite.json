@@ -1,7 +1,7 @@
 {
   "database_name": "library_demo",
   "dialect": "sqlite",
-  "description": "图书馆管理系统演示库，涵盖图书、借阅及学生信息",
+  "description": "图书馆借阅管理系统，管理书籍、学生及借阅记录。",
   "source": {
     "name": "local-upload",
     "database_file": "data/local_dbs/library_demo.sqlite"
@@ -22,28 +22,28 @@
           "name": "Book_no",
           "type": "VARCHAR(10)",
           "nullable": true,
-          "description": "图书的唯一标识编号"
+          "description": "唯一标识每本图书的编号。"
         },
         {
           "name": "Book_name",
           "type": "VARCHAR(30)",
           "nullable": true,
-          "description": "图书的名称或标题"
+          "description": "记录图书的名称或标题。"
         },
         {
           "name": "Author",
           "type": "VARCHAR(30)",
           "nullable": true,
-          "description": "图书的作者姓名"
+          "description": "记录图书的作者信息。"
         },
         {
           "name": "Price",
           "type": "FLOAT",
           "nullable": true,
-          "description": "图书的销售金额数值"
+          "description": "表示图书的定价金额。"
         }
       ],
-      "description": "存储图书基本信息，含编号、名称、作者及价格"
+      "description": "存储图书基本信息，包括书名、作者和价格。"
     },
     {
       "name": "Borrow",
@@ -73,22 +73,22 @@
           "name": "Student_no",
           "type": "VARCHAR(10)",
           "nullable": true,
-          "description": "学生的唯一识别编号"
+          "description": "表示借阅学生的学号，关联学生表。"
         },
         {
           "name": "Book_no",
           "type": "VARCHAR(10)",
           "nullable": true,
-          "description": "对应图书的唯一编号"
+          "description": "表示被借阅图书的书号，关联图书表。"
         },
         {
           "name": "Return_date",
           "type": "DATETIME",
           "nullable": true,
-          "description": "记录图书归还的具体日期时间"
+          "description": "记录图书归还的日期。"
         }
       ],
-      "description": "记录学生借阅图书的详情，含学号、书号和归还日期"
+      "description": "记录学生借阅图书的详细信息，包括归还日期。"
     },
     {
       "name": "DemoCourse",
@@ -102,22 +102,22 @@
           "name": "course_id",
           "type": "INTEGER",
           "nullable": true,
-          "description": "课程的唯一标识符"
+          "description": "唯一标识每门课程的编号。"
         },
         {
           "name": "course_name",
           "type": "TEXT",
           "nullable": true,
-          "description": "课程的名称信息"
+          "description": "表示课程的名称。"
         },
         {
           "name": "credit",
           "type": "INTEGER",
           "nullable": true,
-          "description": "课程对应的学分数值"
+          "description": "表示课程的学分。"
         }
       ],
-      "description": "存储课程基础信息，含课程ID、名称及学分"
+      "description": "存储课程相关信息，如课程名称和学分。"
     },
     {
       "name": "Student",
@@ -131,28 +131,28 @@
           "name": "Student_no",
           "type": "VARCHAR(10)",
           "nullable": true,
-          "description": "学生的唯一识别编号"
+          "description": "唯一标识每位学生的学号。"
         },
         {
           "name": "Student_name",
           "type": "VARCHAR(30)",
           "nullable": true,
-          "description": "学生的真实姓名"
+          "description": "记录学生的姓名。"
         },
         {
           "name": "Grade",
           "type": "VARCHAR(10)",
           "nullable": true,
-          "description": "学生所在的年级信息"
+          "description": "表示学生所在的年级。"
         },
         {
           "name": "Age",
           "type": "INTEGER",
           "nullable": true,
-          "description": "记录 Student 中 Age 的业务属性。"
+          "description": "记录学生的年龄信息。"
         }
       ],
-      "description": "存储学生基本信息，含学号、姓名及年级"
+      "description": "存储学生基本信息，包括姓名、年级和年龄。"
     }
   ]
 }

@@ -4,115 +4,232 @@
       "question": "消费最高的 5 位客户是谁",
       "sql": "SELECT c.CustomerId, c.FirstName || ' ' || c.LastName AS CustomerName, ROUND(SUM(i.Total), 2) AS TotalSpent FROM Customer c JOIN Invoice i ON c.CustomerId = i.CustomerId GROUP BY c.CustomerId, CustomerName ORDER BY TotalSpent DESC LIMIT 5;",
       "explanation": "统计每位客户的累计消费金额，并返回前 5 名。",
-      "tags": ["客户", "消费", "销售额", "top", "ranking"]
+      "tags": [
+        "客户",
+        "消费",
+        "销售额",
+        "top",
+        "ranking"
+      ]
     },
     {
       "question": "销售额最高的 5 个国家",
       "sql": "SELECT BillingCountry, ROUND(SUM(Total), 2) AS Revenue FROM Invoice GROUP BY BillingCountry ORDER BY Revenue DESC LIMIT 5;",
       "explanation": "按账单国家汇总订单总额，用于演示区域销售分析。",
-      "tags": ["国家", "销售额", "订单", "top", "sum"]
+      "tags": [
+        "国家",
+        "销售额",
+        "订单",
+        "top",
+        "sum"
+      ]
     },
     {
       "question": "客户最多的 5 个国家",
       "sql": "SELECT Country, COUNT(*) AS CustomerCount FROM Customer WHERE Country IS NOT NULL GROUP BY Country ORDER BY CustomerCount DESC LIMIT 5;",
       "explanation": "按国家统计客户数量，用于演示客户地域分布。",
-      "tags": ["客户", "国家", "数量", "top", "count"]
+      "tags": [
+        "客户",
+        "国家",
+        "数量",
+        "top",
+        "count"
+      ]
     },
     {
       "question": "客户最多的 5 个城市",
       "sql": "SELECT City, COUNT(*) AS CustomerCount FROM Customer WHERE City IS NOT NULL GROUP BY City ORDER BY CustomerCount DESC LIMIT 5;",
       "explanation": "按城市统计客户数量。",
-      "tags": ["客户", "城市", "数量", "top", "count"]
+      "tags": [
+        "客户",
+        "城市",
+        "数量",
+        "top",
+        "count"
+      ]
     },
     {
       "question": "歌曲数量最多的 5 位艺人",
       "sql": "SELECT ar.Name AS ArtistName, COUNT(t.TrackId) AS TrackCount FROM Artist ar JOIN Album al ON ar.ArtistId = al.ArtistId JOIN Track t ON al.AlbumId = t.AlbumId GROUP BY ar.ArtistId, ar.Name ORDER BY TrackCount DESC LIMIT 5;",
       "explanation": "关联艺人、专辑和歌曲表，统计每位艺人的曲目数量。",
-      "tags": ["艺人", "歌曲", "数量", "top", "count"]
+      "tags": [
+        "艺人",
+        "歌曲",
+        "数量",
+        "top",
+        "count"
+      ]
     },
     {
       "question": "每位艺人有多少张专辑",
       "sql": "SELECT ar.Name AS ArtistName, COUNT(al.AlbumId) AS AlbumCount FROM Artist ar LEFT JOIN Album al ON ar.ArtistId = al.ArtistId GROUP BY ar.ArtistId, ar.Name ORDER BY AlbumCount DESC;",
       "explanation": "统计每位艺人的专辑数量。",
-      "tags": ["艺人", "专辑", "数量", "count"]
+      "tags": [
+        "艺人",
+        "专辑",
+        "数量",
+        "count"
+      ]
     },
     {
       "question": "销量最高的 5 个专辑",
       "sql": "SELECT al.Title AS AlbumTitle, COUNT(il.InvoiceLineId) AS PurchaseCount, ROUND(SUM(il.UnitPrice * il.Quantity), 2) AS Revenue FROM Album al JOIN Track t ON al.AlbumId = t.AlbumId JOIN InvoiceLine il ON t.TrackId = il.TrackId GROUP BY al.AlbumId, al.Title ORDER BY PurchaseCount DESC, Revenue DESC LIMIT 5;",
       "explanation": "将专辑热度定义为购买次数优先、销售额次之，用于处理热门专辑类模糊问题。",
-      "tags": ["专辑", "销量", "热门", "最火", "购买量", "top", "ranking"]
+      "tags": [
+        "专辑",
+        "销量",
+        "热门",
+        "最火",
+        "购买量",
+        "top",
+        "ranking"
+      ]
     },
     {
       "question": "每种媒体类型有多少首歌曲",
       "sql": "SELECT mt.Name AS MediaType, COUNT(t.TrackId) AS TrackCount FROM MediaType mt LEFT JOIN Track t ON mt.MediaTypeId = t.MediaTypeId GROUP BY mt.MediaTypeId, mt.Name ORDER BY TrackCount DESC;",
       "explanation": "用于展示维度聚合和左连接场景。",
-      "tags": ["媒体类型", "歌曲", "数量", "count"]
+      "tags": [
+        "媒体类型",
+        "歌曲",
+        "数量",
+        "count"
+      ]
     },
     {
       "question": "歌曲最多的 5 个播放列表",
       "sql": "SELECT p.Name AS PlaylistName, COUNT(pt.TrackId) AS TrackCount FROM Playlist p LEFT JOIN PlaylistTrack pt ON p.PlaylistId = pt.PlaylistId GROUP BY p.PlaylistId, p.Name ORDER BY TrackCount DESC LIMIT 5;",
       "explanation": "用于展示多对多关系和聚合。",
-      "tags": ["播放列表", "歌单", "歌曲", "数量", "top", "count"]
+      "tags": [
+        "播放列表",
+        "歌单",
+        "歌曲",
+        "数量",
+        "top",
+        "count"
+      ]
     },
     {
       "question": "每年有多少笔订单",
       "sql": "SELECT strftime('%Y', InvoiceDate) AS InvoiceYear, COUNT(*) AS InvoiceCount FROM Invoice GROUP BY InvoiceYear ORDER BY InvoiceYear;",
       "explanation": "展示时间字段处理和年度趋势统计。",
-      "tags": ["年份", "订单", "数量", "时间", "count"]
+      "tags": [
+        "年份",
+        "订单",
+        "数量",
+        "时间",
+        "count"
+      ]
     },
     {
       "question": "2009 年有多少笔订单",
       "sql": "SELECT COUNT(*) AS InvoiceCount FROM Invoice WHERE strftime('%Y', InvoiceDate) = '2009';",
       "explanation": "展示带时间过滤的订单统计。",
-      "tags": ["年份", "订单", "数量", "时间", "filter", "count"]
+      "tags": [
+        "年份",
+        "订单",
+        "数量",
+        "时间",
+        "filter",
+        "count"
+      ]
     },
     {
       "question": "平均时长最长的 5 个流派",
       "sql": "SELECT g.Name AS GenreName, ROUND(AVG(t.Milliseconds) / 1000.0, 2) AS AvgSeconds FROM Genre g JOIN Track t ON g.GenreId = t.GenreId GROUP BY g.GenreId, g.Name ORDER BY AvgSeconds DESC LIMIT 5;",
       "explanation": "把毫秒转换成秒，展示平均值指标计算。",
-      "tags": ["流派", "平均", "时长", "top", "average"]
+      "tags": [
+        "流派",
+        "平均",
+        "时长",
+        "top",
+        "average"
+      ]
     },
     {
       "question": "歌曲数量最多的 5 个流派",
       "sql": "SELECT g.Name AS GenreName, COUNT(t.TrackId) AS TrackCount FROM Genre g LEFT JOIN Track t ON g.GenreId = t.GenreId GROUP BY g.GenreId, g.Name ORDER BY TrackCount DESC LIMIT 5;",
       "explanation": "统计每个流派下的歌曲数量。",
-      "tags": ["流派", "歌曲", "数量", "top", "count"]
+      "tags": [
+        "流派",
+        "歌曲",
+        "数量",
+        "top",
+        "count"
+      ]
     },
     {
       "question": "单价最高的 10 首歌曲",
       "sql": "SELECT Name, UnitPrice FROM Track ORDER BY UnitPrice DESC, Name ASC LIMIT 10;",
       "explanation": "展示简单排序查询和 LIMIT 控制。",
-      "tags": ["歌曲", "单价", "价格", "top", "ranking"]
+      "tags": [
+        "歌曲",
+        "单价",
+        "价格",
+        "top",
+        "ranking"
+      ]
     },
     {
       "question": "最长的 10 首歌曲",
       "sql": "SELECT Name, ROUND(Milliseconds / 1000.0, 2) AS Seconds FROM Track ORDER BY Milliseconds DESC, Name ASC LIMIT 10;",
       "explanation": "展示时长排序查询。",
-      "tags": ["歌曲", "时长", "最长", "top", "ranking"]
+      "tags": [
+        "歌曲",
+        "时长",
+        "最长",
+        "top",
+        "ranking"
+      ]
     },
     {
       "question": "哪位客服负责的客户最多",
       "sql": "SELECT e.FirstName || ' ' || e.LastName AS SupportRepName, COUNT(c.CustomerId) AS CustomerCount FROM Employee e LEFT JOIN Customer c ON e.EmployeeId = c.SupportRepId GROUP BY e.EmployeeId, SupportRepName ORDER BY CustomerCount DESC LIMIT 5;",
       "explanation": "统计每位客服负责的客户数量。",
-      "tags": ["客服", "员工", "客户", "数量", "top", "count"]
+      "tags": [
+        "客服",
+        "员工",
+        "客户",
+        "数量",
+        "top",
+        "count"
+      ]
     },
     {
       "question": "平均消费最高的 5 个国家",
       "sql": "SELECT BillingCountry, ROUND(AVG(Total), 2) AS AvgOrderValue FROM Invoice GROUP BY BillingCountry ORDER BY AvgOrderValue DESC LIMIT 5;",
       "explanation": "按国家统计平均订单金额。",
-      "tags": ["国家", "平均消费", "订单", "top", "average"]
+      "tags": [
+        "国家",
+        "平均消费",
+        "订单",
+        "top",
+        "average"
+      ]
     },
     {
       "question": "美国有多少位客户",
       "sql": "SELECT COUNT(*) AS CustomerCount FROM Customer WHERE Country = 'USA';",
       "explanation": "展示带固定条件的客户数量统计。",
-      "tags": ["客户", "国家", "美国", "数量", "filter", "count"]
+      "tags": [
+        "客户",
+        "国家",
+        "美国",
+        "数量",
+        "filter",
+        "count"
+      ]
     },
     {
       "question": "哪些客户没有公司信息",
       "sql": "SELECT FirstName || ' ' || LastName AS CustomerName, Country FROM Customer WHERE Company IS NULL ORDER BY CustomerName ASC LIMIT 10;",
       "explanation": "展示空值筛选查询。",
-      "tags": ["客户", "公司", "为空", "filter"]
+      "tags": [
+        "客户",
+        "公司",
+        "为空",
+        "filter"
+      ]
     }
   ]
 }

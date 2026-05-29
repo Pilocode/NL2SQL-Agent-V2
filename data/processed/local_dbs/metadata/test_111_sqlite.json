@@ -1,0 +1,49 @@
+{
+  "database_name": "test_111",
+  "dialect": "sqlite",
+  "description": "用于测试的数据库，名称test_111",
+  "source": {
+    "name": "local-upload",
+    "database_file": "data/local_dbs/test_111.sqlite"
+  },
+  "domain_tags": [
+    "test_111"
+  ],
+  "tables": [
+    {
+      "name": "Book",
+      "row_count": 0,
+      "primary_keys": [
+        "Book_no"
+      ],
+      "foreign_keys": [],
+      "columns": [
+        {
+          "name": "Book_no",
+          "type": "TEXT(10)",
+          "nullable": true,
+          "description": "记录 Book 中 Book_no 的业务属性。"
+        },
+        {
+          "name": "Book_name",
+          "type": "TEXT(30)",
+          "nullable": true,
+          "description": "表示 Book 的名称或标题信息。"
+        },
+        {
+          "name": "Author",
+          "type": "TEXT(30)",
+          "nullable": true,
+          "description": "记录 Book 中 Author 的业务属性。"
+        },
+        {
+          "name": "Price",
+          "type": "REAL",
+          "nullable": true,
+          "description": "表示 Book 的金额或数值指标。"
+        }
+      ],
+      "description": "记录 Book 相关数据，核心字段包括 Book_no、Book_name、Author。"
+    }
+  ]
+}

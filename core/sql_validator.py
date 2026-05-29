@@ -3,7 +3,7 @@ from __future__ import annotations
 import sqlglot
 from sqlglot import exp
 
-from core.models import OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, ValidationResult
+from core.models import OPERATION_MODE_AUTO, OPERATION_MODE_DDL, OPERATION_MODE_DML, OPERATION_MODE_QUERY, ValidationResult
 
 
 class SQLValidator:
@@ -56,6 +56,8 @@ class SQLValidator:
                     statement_type=statement_type,
                     operation_mode=operation_mode,
                 )
+        elif operation_mode == OPERATION_MODE_AUTO:
+            pass  # allow all SQL types
         else:
             return ValidationResult(
                 is_valid=False,
